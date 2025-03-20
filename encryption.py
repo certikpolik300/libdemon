@@ -148,20 +148,19 @@ class FileEncryption:
         msg_key = hashlib.sha3_512(payload).digest()[:32]
         derived_key = hashlib.sha3_512(auth_key + msg_key).digest()
         
-        # Keeping AES-GCM for file encryption
-        iv, ciphertext, tag = AESGCM.encrypt(derived_key, payload)
+        # Using AES-CTR for file encryption
+        iv, ciphertext = AESCTR.encrypt(derived_key, payload)
 
-        return msg_key + iv + tag + ciphertext
+        return msg_key + iv + ciphertext
 
     @staticmethod
     def decrypt(auth_key, encrypted_data, output_path):
         msg_key = encrypted_data[:32]
-        iv = encrypted_data[32:44]
-        tag = encrypted_data[44:60]
-        ciphertext = encrypted_data[60:]
+        iv = encrypted_data[32:48]
+        ciphertext = encrypted_data[48:]
 
         derived_key = hashlib.sha3_512(auth_key + msg_key).digest()
-        decrypted_payload = AESGCM.decrypt(derived_key, iv, ciphertext, tag)
+        decrypted_payload = AESCTR.decrypt(derived_key, iv, ciphertext)
 
         with open(output_path, 'wb') as f:
             f.write(decrypted_payload[32:])
