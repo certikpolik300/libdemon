@@ -7,11 +7,10 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.backends import default_backend
 import json
 import time
-import base64
 import qrcode
 from cryptogamax import gamax  # Importing the GamaX library
 
@@ -33,7 +32,7 @@ class ECDH:
             backend=default_backend()
         ).derive(shared_secret)
         return derived_key
-    
+
     @staticmethod
     def generate_verification_code(public_key1, public_key2):
         combined_keys = public_key1.public_bytes(
@@ -104,11 +103,11 @@ class MessageEncryption:
         payload = salt + session_id + seq_number + timestamp + message.encode()
 
         msg_key = hashlib.sha3_512(payload).digest()[:32]
-        
-        # Use auth_key directly for GamaX encryption
+
+        # Use GamaX for encryption
         gamax_cipher = gamax(auth_key)
         encrypted_data, mac, nonce = gamax_cipher.encrypt(payload)
-        
+
         return msg_key + nonce + mac + encrypted_data
 
     @staticmethod
@@ -118,18 +117,13 @@ class MessageEncryption:
         mac = encrypted_message[64:96]
         ciphertext = encrypted_message[96:]
 
-        # Use auth_key directly for GamaX decryption
         gamax_cipher = gamax(auth_key)
         decrypted_payload = gamax_cipher.decrypt(ciphertext, mac, nonce)
 
-        salt = decrypted_payload[:8]
-        session_id = decrypted_payload[8:16]
-        seq_number = decrypted_payload[16:24]
-        timestamp = decrypted_payload[24:32]
         message = decrypted_payload[32:].decode()
 
         return message
-        
+
 class FileEncryption:
     @staticmethod
     def encrypt(auth_key, file_path):
@@ -143,10 +137,9 @@ class FileEncryption:
         payload = salt + session_id + seq_number + timestamp + file_data
 
         msg_key = hashlib.sha3_512(payload).digest()[:32]
-        derived_key = hashlib.sha3_512(auth_key + msg_key).digest()
-        
-        # Using AES-CTR for file encryption
-        iv, ciphertext = AESCTR.encrypt(derived_key, payload)
+        aes_key = hashlib.sha3_512(auth_key + msg_key).digest()  # Derive AES key only for file encryption
+
+        iv, ciphertext = AESCTR.encrypt(aes_key, payload)
 
         return msg_key + iv + ciphertext
 
@@ -156,8 +149,8 @@ class FileEncryption:
         iv = encrypted_data[32:48]
         ciphertext = encrypted_data[48:]
 
-        derived_key = hashlib.sha3_512(auth_key + msg_key).digest()
-        decrypted_payload = AESCTR.decrypt(derived_key, iv, ciphertext)
+        aes_key = hashlib.sha3_512(auth_key + msg_key).digest()
+        decrypted_payload = AESCTR.decrypt(aes_key, iv, ciphertext)
 
         with open(output_path, 'wb') as f:
             f.write(decrypted_payload[32:])
@@ -185,7 +178,7 @@ class SecureKeyStorage:
             json.dump(self.keys, f)
 
     def generate_new_key(self):
-        new_key = os.urandom(32)
+        new_key = gamax().generate_strong_key()  # Use GamaX for key generation
         key_id = hashlib.sha256(new_key).hexdigest()
         self.keys[key_id] = {
             'key': new_key.hex(),
