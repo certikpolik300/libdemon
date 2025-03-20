@@ -104,10 +104,9 @@ class MessageEncryption:
         payload = salt + session_id + seq_number + timestamp + message.encode()
 
         msg_key = hashlib.sha3_512(payload).digest()[:32]
-        derived_key = hashlib.sha3_512(auth_key + msg_key).digest()
         
-        # Using GamaX for encryption
-        gamax_cipher = gamax(derived_key)
+        # Use auth_key directly for GamaX encryption
+        gamax_cipher = gamax(auth_key)
         encrypted_data, mac, nonce = gamax_cipher.encrypt(payload)
         
         return msg_key + nonce + mac + encrypted_data
@@ -119,10 +118,8 @@ class MessageEncryption:
         mac = encrypted_message[64:96]
         ciphertext = encrypted_message[96:]
 
-        derived_key = hashlib.sha3_512(auth_key + msg_key).digest()
-        
-        # Using GamaX for decryption
-        gamax_cipher = gamax(derived_key)
+        # Use auth_key directly for GamaX decryption
+        gamax_cipher = gamax(auth_key)
         decrypted_payload = gamax_cipher.decrypt(ciphertext, mac, nonce)
 
         salt = decrypted_payload[:8]
@@ -132,7 +129,7 @@ class MessageEncryption:
         message = decrypted_payload[32:].decode()
 
         return message
-
+        
 class FileEncryption:
     @staticmethod
     def encrypt(auth_key, file_path):
