@@ -13,6 +13,7 @@ import json
 import time
 import base64
 import qrcode
+from cryptogamax import gamax  # Importing the GamaX library
 
 class ECDH:
     @staticmethod
@@ -48,23 +49,6 @@ class ECDH:
         qr.add_data(hash_obj)
         qr_code = qr.make_image(fill='black', back_color='white')
         return short_code, qr_code
-
-class AESGCM:
-    @staticmethod
-    def encrypt(key, plaintext, associated_data=b''):
-        iv = os.urandom(12)
-        cipher = Cipher(algorithms.AES(key), modes.GCM(iv), backend=default_backend())
-        encryptor = cipher.encryptor()
-        encryptor.authenticate_additional_data(associated_data)
-        ciphertext = encryptor.update(plaintext) + encryptor.finalize()
-        return iv, ciphertext, encryptor.tag
-
-    @staticmethod
-    def decrypt(key, iv, ciphertext, tag, associated_data=b''):
-        cipher = Cipher(algorithms.AES(key), modes.GCM(iv, tag), backend=default_backend())
-        decryptor = cipher.decryptor()
-        decryptor.authenticate_additional_data(associated_data)
-        return decryptor.update(ciphertext) + decryptor.finalize()
 
 class AESCTR:
     @staticmethod
@@ -121,18 +105,25 @@ class MessageEncryption:
 
         msg_key = hashlib.sha3_512(payload).digest()[:32]
         derived_key = hashlib.sha3_512(auth_key + msg_key).digest()
-        iv, ciphertext = AESCTR.encrypt(derived_key, payload)
-
-        return msg_key + iv + ciphertext
+        
+        # Using GamaX for encryption
+        gamax_cipher = gamax(derived_key)
+        encrypted_data, mac, nonce = gamax_cipher.encrypt(payload)
+        
+        return msg_key + nonce + mac + encrypted_data
 
     @staticmethod
     def decrypt(auth_key, encrypted_message):
         msg_key = encrypted_message[:32]
-        iv = encrypted_message[32:48]
-        ciphertext = encrypted_message[48:]
+        nonce = encrypted_message[32:64]
+        mac = encrypted_message[64:96]
+        ciphertext = encrypted_message[96:]
 
         derived_key = hashlib.sha3_512(auth_key + msg_key).digest()
-        decrypted_payload = AESCTR.decrypt(derived_key, iv, ciphertext)
+        
+        # Using GamaX for decryption
+        gamax_cipher = gamax(derived_key)
+        decrypted_payload = gamax_cipher.decrypt(ciphertext, mac, nonce)
 
         salt = decrypted_payload[:8]
         session_id = decrypted_payload[8:16]
@@ -156,6 +147,8 @@ class FileEncryption:
 
         msg_key = hashlib.sha3_512(payload).digest()[:32]
         derived_key = hashlib.sha3_512(auth_key + msg_key).digest()
+        
+        # Keeping AES-GCM for file encryption
         iv, ciphertext, tag = AESGCM.encrypt(derived_key, payload)
 
         return msg_key + iv + tag + ciphertext
