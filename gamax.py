@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.hmac import HMAC
 
-class gamax:
+class galyrex:
     def __init__(self, key=None, iterations=500000):
         """
         Initialize the cipher with a key. If no key is provided, generate one.
