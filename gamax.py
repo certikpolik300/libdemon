@@ -1,3 +1,4 @@
+import random
 import hashlib
 import os
 from Crypto.Random import get_random_bytes
@@ -23,6 +24,8 @@ class gamax:
         self.key = key
         self.round_keys = self._generate_round_keys()
         self.iterations = iterations
+        self.sbox = self._generate_sbox()
+        self.inv_sbox = self._generate_inv_sbox()
 
     def _generate_round_keys(self):
         """
@@ -108,7 +111,7 @@ class gamax:
         Use more advanced S-boxes or mix columns like in AES but with increased complexity.
         """
         # Perform XOR with round key and apply additional transformation for added security
-        transformed_data = bytearray([data[i] ^ round_key[i % len(round_key)] for i in range(len(data))])
+        transformed_data = bytearray([self.sbox[data[i] ^ round_key[i % len(round_key)]] for i in range(len(data))])
         # Apply additional nonlinear layer
         transformed_data = self._additional_nonlinear_layer(transformed_data)
         return transformed_data
@@ -121,7 +124,7 @@ class gamax:
         # Reverse additional nonlinear layer
         transformed_data = self._reverse_additional_nonlinear_layer(data)
         # Perform XOR with round key to reverse the transformation
-        reversed_data = bytearray([transformed_data[i] ^ round_key[i % len(round_key)] for i in range(len(transformed_data))])
+        reversed_data = bytearray([self.inv_sbox[transformed_data[i]] ^ round_key[i % len(round_key)] for i in range(len(transformed_data))])
         return reversed_data
 
     def _additional_nonlinear_layer(self, data):
@@ -153,6 +156,23 @@ class gamax:
         hmac_final = HMAC(self.key, hashes.SHA256(), backend=default_backend())
         hmac_final.update(mac1 + mac2)
         return hmac_final.finalize()
+
+    def _generate_sbox(self):
+        """
+        Generate a highly secure and complex S-box.
+        """
+        sbox = [i for i in range(256)]
+        random.shuffle(sbox)
+        return sbox
+
+    def _generate_inv_sbox(self):
+        """
+        Generate the inverse of the S-box.
+        """
+        inv_sbox = [0] * 256
+        for i in range(256):
+            inv_sbox[self.sbox[i]] = i
+        return inv_sbox
 
     def save_key(self, filepath):
         """
