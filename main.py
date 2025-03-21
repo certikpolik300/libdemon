@@ -182,3 +182,26 @@ class main:
         Convert hexadecimal string back to text.
         """
         return bytes.fromhex(hex_data).decode()
+
+
+# Example usage of the custom encryption algorithm for text encryption
+
+# Instantiate the encryption class
+cipher = main()
+
+# Original text to encrypt
+original_text = "This is a very secret message!"
+
+# Encrypt the text
+encrypted_data, mac, nonce = cipher.encrypt(original_text)
+
+# Display the encrypted data, MAC, and nonce (in hexadecimal format for readability)
+print("Encrypted Data:", encrypted_data.hex())
+print("MAC:", mac.hex())
+print("Nonce:", nonce.hex())
+
+# Decrypt the text
+decrypted_text = cipher.decrypt(encrypted_data, mac, nonce)
+
+# Display the decrypted text
+print("\nDecrypted Text:", decrypted_text)
