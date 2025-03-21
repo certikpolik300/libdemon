@@ -1,6 +1,7 @@
 import socket
 import hashlib
 import os
+from cryptogamax import gamax  # Import the cryptogamax library
 
 class Proxy:
     def __init__(self, proxy_type=None, proxy_ip=None, proxy_port=None, username=None, password=None):
@@ -9,6 +10,7 @@ class Proxy:
         self.proxy_port = proxy_port
         self.username = username
         self.password = password
+        self.encryption = gamax()  # Initialize cryptogamax encryption
 
     def set_socks5_proxy(self, ip, port, username=None, password=None):
         self.proxy_type = "SOCKS5"
@@ -19,7 +21,7 @@ class Proxy:
 
     def set_dtproto_proxy(self):
         self.proxy_type = "DTPROTO"
-        self.proxy_ip = "10.0.1.33"
+        self.proxy_ip = "####"
         self.proxy_port = 53149
         self.username = "dtproto"  # Replace with actual credentials
         self.password = "megalodon"  # Replace with actual credentials
@@ -40,36 +42,41 @@ class Proxy:
     def _dtproto_connect(self, host, port):
         # DTProto connection setup (with multi-stage handshake and authentication)
         print(f"Connecting to DTProto proxy at {self.proxy_ip}:{self.proxy_port}")
-        
+
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.proxy_ip, self.proxy_port))
-        
+
         # Step 1: Send initial connection request
         handshake_message = f"CONNECT {host}:{port} DTPROTO/1.0\n"
-        sock.sendall(handshake_message.encode())
-        
+        encrypted_handshake_message = self.encryption.encrypt(handshake_message)
+        sock.sendall(encrypted_handshake_message)
+
         # Step 2: Receive connection confirmation or failure
         response = sock.recv(1024)
-        if b"200 Connection established" not in response:
+        decrypted_response = self.encryption.decrypt(response)
+        if b"200 Connection established" not in decrypted_response:
             raise ConnectionError("DTProto proxy connection failed at handshake step 1")
-        
+
         print("Step 1: Handshake successful. Starting authentication...")
 
         # Step 3: Send authentication credentials with token validation
         auth_token = self._generate_auth_token()
         auth_message = f"AUTH {self.username} {self.password} {auth_token}\n"
-        sock.sendall(auth_message.encode())
-        
+        encrypted_auth_message = self.encryption.encrypt(auth_message)
+        sock.sendall(encrypted_auth_message)
+
         # Step 4: Receive authentication response and validate token
         auth_response = sock.recv(1024)
-        if b"200 Authentication successful" not in auth_response:
+        decrypted_auth_response = self.encryption.decrypt(auth_response)
+        if b"200 Authentication successful" not in decrypted_auth_response:
             raise ConnectionError("DTProto proxy authentication failed")
-        
+
         print("Step 2: Authentication successful. Connection established.")
 
         return sock
 
     def _generate_auth_token(self):
+        # Generate a real authentication token, for example using a hash of the password and a salt
         salt = os.urandom(16)
         token = hashlib.sha256(self.password.encode() + salt).hexdigest()
         return token
