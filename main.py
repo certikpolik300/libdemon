@@ -19,9 +19,9 @@ class main:
             key = self.generate_strong_key()
         
         self.key = key
-        self.round_keys = self._generate_round_keys()
-        self.iterations = iterations
-
+        self.iterations = iterations  # Ensure iterations is set before calling _generate_round_keys
+        self.round_keys = self._generate_round_keys()  # Now iterations is available
+       
     def _generate_round_keys(self):
         """
         Use an advanced key expansion technique (PBKDF2 and multiple rounds of hashing)
