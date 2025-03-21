@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="cryptogalyrex",
-    version="1.0",
+    version="2.0",
     description="...",
     author="Alfisene Keita",
     packages=find_packages(),
