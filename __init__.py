@@ -1,0 +1,1 @@
+from .gamax import gamax
