@@ -1,82 +1,44 @@
-import socket
-import hashlib
-import os
-from cryptogamax import gamax  # Import the cryptogamax library
+from cryptogalyrex import galyrex
+from Crypto.Random import get_random_bytes
+import itertools
+import time
 
-class Proxy:
-    def __init__(self, proxy_type=None, proxy_ip=None, proxy_port=None, username=None, password=None):
-        self.proxy_type = proxy_type
-        self.proxy_ip = proxy_ip
-        self.proxy_port = proxy_port
-        self.username = username
-        self.password = password
-        self.encryption = gamax()  # Initialize cryptogamax encryption
+def brute_force_attack(ciphertext, known_plaintext, nonce, mac, key_len=8, timeout=60):
+    # Alphabet now contains only the first 256 possible byte values, i.e., the 8-bit key space
+    alphabet = range(256)
 
-    def set_socks5_proxy(self, ip, port, username=None, password=None):
-        self.proxy_type = "SOCKS5"
-        self.proxy_ip = ip
-        self.proxy_port = port
-        self.username = username
-        self.password = password
+    start_time = time.time()
 
-    def set_dtproto_proxy(self):
-        self.proxy_type = "DTPROTO"
-        self.proxy_ip = "####"
-        self.proxy_port = 53149
-        self.username = "dtproto"  # Replace with actual credentials
-        self.password = "megalodon"  # Replace with actual credentials
+    # Iterate over all possible keys of length `key_len`
+    for key_tuple in itertools.product(alphabet, repeat=key_len):
+        key = bytes(key_tuple)
+        cipher = galyrex(key=key)
+        try:
+            decrypted_text = cipher.decrypt(ciphertext, mac, nonce)
+            if known_plaintext in decrypted_text:
+                print(f"Key found: {key.hex()}")
+                end_time = time.time()
+                print(f"Brute force attack duration: {end_time - start_time} seconds")
+                return key
+        except Exception as e:
+            # Catch exceptions, could be decryption failure or any other errors
+            pass
+        
+        # Check for timeout
+        if time.time() - start_time > timeout:
+            print("Timeout reached.")
+            break
 
-    def connect(self, host, port):
-        if self.proxy_type == "SOCKS5":
-            import socks  # PySocks library
-            socks.set_default_proxy(socks.SOCKS5, self.proxy_ip, self.proxy_port, username=self.username, password=self.password)
-            socket.socket = socks.socksocket
-        elif self.proxy_type == "DTPROTO":
-            self._dtproto_connect(host, port)
+    end_time = time.time()
+    print("Key not found within the attempt limit")
+    print(f"Brute force attack duration: {end_time - start_time} seconds")
+    return None
 
-        # Connect to the host
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, port))
-        return sock
+# Example usage
+cipher = galyrex()
+plaintext = "This is a test message."
+nonce = get_random_bytes(64)
+ciphertext, mac, nonce = cipher.encrypt(plaintext, nonce)
 
-    def _dtproto_connect(self, host, port):
-        # DTProto connection setup (with multi-stage handshake and authentication)
-        print(f"Connecting to DTProto proxy at {self.proxy_ip}:{self.proxy_port}")
-
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((self.proxy_ip, self.proxy_port))
-
-        # Step 1: Send initial connection request
-        handshake_message = f"CONNECT {host}:{port} DTPROTO/1.0\n"
-        encrypted_handshake_message = self.encryption.encrypt(handshake_message)
-        sock.sendall(encrypted_handshake_message)
-
-        # Step 2: Receive connection confirmation or failure
-        response = sock.recv(1024)
-        decrypted_response = self.encryption.decrypt(response)
-        if b"200 Connection established" not in decrypted_response:
-            raise ConnectionError("DTProto proxy connection failed at handshake step 1")
-
-        print("Step 1: Handshake successful. Starting authentication...")
-
-        # Step 3: Send authentication credentials with token validation
-        auth_token = self._generate_auth_token()
-        auth_message = f"AUTH {self.username} {self.password} {auth_token}\n"
-        encrypted_auth_message = self.encryption.encrypt(auth_message)
-        sock.sendall(encrypted_auth_message)
-
-        # Step 4: Receive authentication response and validate token
-        auth_response = sock.recv(1024)
-        decrypted_auth_response = self.encryption.decrypt(auth_response)
-        if b"200 Authentication successful" not in decrypted_auth_response:
-            raise ConnectionError("DTProto proxy authentication failed")
-
-        print("Step 2: Authentication successful. Connection established.")
-
-        return sock
-
-    def _generate_auth_token(self):
-        # Generate a real authentication token, for example using a hash of the password and a salt
-        salt = os.urandom(16)
-        token = hashlib.sha256(self.password.encode() + salt).hexdigest()
-        return token
+# Brute force with an 8-bit key (just for testing purposes)
+brute_force_attack(ciphertext, plaintext[:16], nonce, mac, key_len=8, timeout=60)
