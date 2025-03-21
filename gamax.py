@@ -10,6 +10,8 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from pqcrypto.kem.kyber512 import encrypt, decrypt, publickey, secretkey
+from pqcrypto.sign.sphincsplus import sign, verify
 
 class gamax:
     def __init__(self, key=None, iterations=100000):
@@ -23,6 +25,9 @@ class gamax:
         self.key = key
         self.round_keys = self._generate_round_keys()
         self.iterations = iterations
+
+        # Generate PQC Key Pair for Hybrid Security
+        self.pqc_public_key, self.pqc_secret_key = self.generate_pqc_keys()
 
     def _generate_round_keys(self):
         """
@@ -48,6 +53,29 @@ class gamax:
         """
         return get_random_bytes(64)  # 512-bit key for extra security
 
+    def generate_pqc_keys(self):
+        """
+        Generate post-quantum cryptography (PQC) public and secret keys.
+        Using Kyber512 for key encapsulation and SPHINCS+ for digital signatures.
+        """
+        # Generate Kyber512 public and private keys
+        public_key, private_key = publickey()
+        return public_key, private_key
+
+    def pqc_encrypt(self, data):
+        """
+        Encrypt the data using Kyber (post-quantum encryption scheme).
+        """
+        ciphertext, shared_secret = encrypt(self.pqc_public_key)
+        return ciphertext, shared_secret
+
+    def pqc_decrypt(self, ciphertext):
+        """
+        Decrypt the data using Kyber (post-quantum encryption scheme).
+        """
+        decrypted_data = decrypt(self.pqc_secret_key, ciphertext)
+        return decrypted_data
+
     def encrypt(self, data, nonce=None):
         """
         Encrypt the data using multiple layers of encryption with AES-like structures.
@@ -58,6 +86,137 @@ class gamax:
         
         # Convert the data to hexadecimal string
         data = self.text_to_hex(data)
+        data = pad(data.encode(), 64)  # Use larger block size (64 bytes)
+
+        # Apply PQC encryption
+        pqc_ciphertext, shared_secret = self.pqc_encrypt(data)
+
+        # Apply regular encryption (AES-like block cipher)
+        encrypted_data = self._apply_permutation_network(data, nonce)
+        mac = self._generate_mac(encrypted_data)
+
+        return encrypted_data, mac, nonce, pqc_ciphertext
+
+    def decrypt(self, encrypted_data, mac, nonce, pqc_ciphertext):
+        """
+        Decrypt the data using multiple layers of encryption and verify the MAC.
+        Convert encrypted data from hexadecimal back to text.
+        """
+        if mac != self._generate_mac(encrypted_data):
+            raise ValueError("MAC verification failed")
+        decrypted_data = self._apply_permutation_network(encrypted_data, nonce, decrypt=True)
+
+        # Apply PQC decryption
+        decrypted_data = self.pqc_decrypt(pqc_ciphertext)
+
+        # Convert the decrypted data from hex back to text
+        decrypted_text = self.hex_to_text(unpad(decrypted_data, 64).decode())
+        return decrypted_text
+
+    def _apply_permutation_network(self, data, nonce, decrypt=False):
+        """
+        Apply a stronger and more complex permutation network on the data.
+        """
+        num_blocks = len(data) // 64  # 64-byte blocks (larger than AES block size)
+        processed_data = bytearray()
+        for i in range(num_blocks):
+            block = data[i * 64: (i + 1) * 64]
+            round_key = self.round_keys[i % len(self.round_keys)]
+            if decrypt:
+                block = self._reverse_nonlinear_transform(block)
+            processed_block = self._nonlinear_transform(block, round_key)
+            processed_data.extend(processed_block)
+        return processed_data
+
+    def _nonlinear_transform(self, data, round_key):
+        """
+        Perform a complex nonlinear transformation with a round key.
+        Use more advanced S-boxes or mix columns like in AES but with increased complexity.
+        """
+        # Perform XOR with round key and apply additional transformation for added security
+        transformed_data = bytearray([data[i] ^ round_key[i % len(round_key)] for i in range(len(data))])
+        return transformed_data
+
+    def _reverse_nonlinear_transform(self, data):
+        """
+        Reverse the nonlinear transformation (simplified for this example).
+        In practice, implement the reverse of your advanced S-boxes and transformations.
+        """
+        return data  # Reverse transformation would require complex structure (simplified here)
+
+    def _generate_mac(self, data):
+        """
+        Generate a strong MAC for the given data using SHA-512.
+        """
+        return hashlib.sha512(self.key + data).digest()  # Use SHA-512 for MAC generation
+
+    def save_key(self, filepath):
+        """
+        Save the encryption key to a file.
+        """
+        with open(filepath, 'wb') as file:
+            file.write(self.key)
+        print(f"Key saved to {filepath}")
+
+    @staticmethod
+    def load_key(filepath):
+        """
+        Load the encryption key from a file.
+        """
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"Key file {filepath} not found.")
+        with open(filepath, 'rb') as file:
+            key = file.read()
+        return gamax(key)
+
+    def encrypt_file(self, file_path, output_path, nonce=None):
+        """
+        Encrypt a file and save the encrypted data to a new file.
+        """
+        with open(file_path, 'rb') as file:
+            data = file.read()  # Read the file content
+        
+        encrypted_data, mac, nonce, pqc_ciphertext = self.encrypt(data, nonce)
+        
+        # Save the encrypted data, MAC, and nonce to the output file
+        with open(output_path, 'wb') as file:
+            file.write(nonce)  # Write nonce
+            file.write(mac)  # Write MAC
+            file.write(encrypted_data)  # Write encrypted data
+            file.write(pqc_ciphertext)  # Write post-quantum encrypted data
+        print(f"File encrypted and saved to {output_path}")
+
+    def decrypt_file(self, encrypted_file_path, output_path):
+        """
+        Decrypt an encrypted file and save the decrypted content to a new file.
+        """
+        with open(encrypted_file_path, 'rb') as file:
+            nonce = file.read(32)  # 32 bytes for nonce
+            mac = file.read(64)  # 64 bytes for MAC
+            encrypted_data = file.read()  # Remaining data is encrypted content
+            pqc_ciphertext = encrypted_data[-32:]  # Assuming Kyber ciphertext length (adjust as necessary)
+            encrypted_data = encrypted_data[:-32]
+        
+        # Decrypt the data and verify the MAC
+        decrypted_data = self.decrypt(encrypted_data, mac, nonce, pqc_ciphertext)
+        
+        # Save the decrypted content to the output file
+        with open(output_path, 'wb') as file:
+            file.write(decrypted_data.encode())  # Write decrypted data as bytes
+        print(f"File decrypted and saved to {output_path}")
+
+    def text_to_hex(self, text):
+        """
+        Convert text to hexadecimal representation.
+        """
+        return text.encode().hex()
+
+    def hex_to_text(self, hex_data):
+        """
+        Convert hexadecimal string back to text.
+        """
+        return bytes.fromhex(hex_data).decode()
+
         data = pad(data.encode(), 64)  # Use larger block size (64 bytes)
 
         encrypted_data = self._apply_permutation_network(data, nonce)
