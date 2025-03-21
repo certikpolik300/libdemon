@@ -1,1 +1,1 @@
-from .gamax import gamax
+from .galyrex import galyrex
