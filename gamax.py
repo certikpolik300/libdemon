@@ -13,7 +13,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.hmac import HMAC
 
 class gamax:
-    def __init__(self, key=None, iterations=200000):
+    def __init__(self, key=None, iterations=500000):
         """
         Initialize the cipher with a key. If no key is provided, generate one.
         Use PBKDF2 with high iterations for key strengthening.
@@ -33,10 +33,10 @@ class gamax:
         to generate many round keys.
         """
         round_keys = []
-        for i in range(96):  # Increased rounds for higher security
+        for i in range(128):  # Increased rounds for higher security
             derived_key = PBKDF2HMAC(
                 algorithm=hashes.SHA512(),
-                length=128,  # Increased key length for round keys
+                length=256,  # Increased key length for round keys
                 salt=self.key,
                 iterations=self.iterations,
                 backend=default_backend()
@@ -44,8 +44,8 @@ class gamax:
             
             scrypt_key = Scrypt(
                 salt=self.key,
-                length=128,
-                n=2**14,
+                length=256,
+                n=2**16,
                 r=8,
                 p=1,
                 backend=default_backend()
@@ -59,7 +59,7 @@ class gamax:
         Generate a new encryption key using a highly secure random process.
         The key will be derived from a strong entropy source.
         """
-        return get_random_bytes(256)  # 2048-bit key for extra security
+        return get_random_bytes(512)  # 4096-bit key for extra security
 
     def encrypt(self, data, nonce=None):
         """
@@ -163,6 +163,8 @@ class gamax:
         """
         sbox = [i for i in range(256)]
         random.shuffle(sbox)
+        for i in range(256):
+            sbox[i] = (sbox[i] + random.randint(0, 255)) % 256
         return sbox
 
     def _generate_inv_sbox(self):
