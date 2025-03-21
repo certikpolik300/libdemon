@@ -1,3 +1,4 @@
+#name of algorithm: GalyreX-Z
 import random
 import hashlib
 import os
