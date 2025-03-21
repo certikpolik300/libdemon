@@ -1,4 +1,4 @@
-from cryptogalyrex import galyrex
+from .galyrex import galyrex
 from Crypto.Random import get_random_bytes
 import itertools
 import time
