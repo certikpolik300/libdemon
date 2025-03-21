@@ -3,9 +3,9 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="cryptogamax",
-    version="3.0",
-    description="A Super Strong Cipher for secure encryption and decryption.",
+    name="cryptogalyrex",
+    version="1.0",
+    description="...",
     author="Alfisene Keita",
     packages=find_packages(),
     install_requires=[
