@@ -1,4 +1,5 @@
-#name of algorithm: GalyreX-Z
+#name of algorithm: GalyreX
+#name of library: cryptogalyrex
 import random
 import hashlib
 import os
