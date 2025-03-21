@@ -19,10 +19,10 @@ class Proxy:
 
     def set_dtproto_proxy(self):
         self.proxy_type = "DTPROTO"
-        self.proxy_ip = "megalodon"
+        self.proxy_ip = "10.0.1.33"
         self.proxy_port = 53149
-        self.username = "user"  # Replace with actual credentials
-        self.password = "password"  # Replace with actual credentials
+        self.username = "dtproto"  # Replace with actual credentials
+        self.password = "megalodon"  # Replace with actual credentials
 
     def connect(self, host, port):
         if self.proxy_type == "SOCKS5":
@@ -70,7 +70,6 @@ class Proxy:
         return sock
 
     def _generate_auth_token(self):
-        # Generate a real authentication token, for example using a hash of the password and a salt
         salt = os.urandom(16)
         token = hashlib.sha256(self.password.encode() + salt).hexdigest()
         return token
