@@ -1,19 +1,28 @@
-import random
-from cryptogalyrex import galyrex
-from Crypto.Random import get_random_bytes
+# Test code for cryptogamax encryption algorithm
+from cryptogamax import galyrex  # Assuming the class is named galyrex.py
 
-def known_plaintext_attack(cipher):
-    plaintext = "This is a known plaintext message."
-    encrypted_data, mac, nonce = cipher.encrypt(plaintext)
-    decrypted_data = cipher.decrypt(encrypted_data, mac, nonce)
-    print("Known-plaintext Attack Test:")
-    print("Original Plaintext:", plaintext)
-    print("Decrypted Plaintext:", decrypted_data)
-    print("Attack Successful:", plaintext == decrypted_data)
-    print()
+def test_encrypt_decrypt_text():
+    # Initialize the galyrex encryption class
+    cipher = galyrex()
+
+    # Sample text to encrypt
+    plain_text = "This is a test message for Cryptogamax encryption!"
+
+    print("Original Text: ", plain_text)
+
+    # Encrypt the text
+    encrypted_data, mac, nonce = cipher.encrypt(plain_text)
+
+    print("\nEncrypted Data (Hex): ", encrypted_data.hex())
+    print("MAC (Hex): ", mac.hex())
+    print("Nonce (Hex): ", nonce.hex())
+
+    # Decrypt the text
+    decrypted_text = cipher.decrypt(encrypted_data, mac, nonce)
+
+    print("\nDecrypted Text: ", decrypted_text)
+    assert plain_text == decrypted_text, "Decryption failed!"
 
 if __name__ == "__main__":
-    key = get_random_bytes(512)
-    cipher = galyrex(key)
-    
-    known_plaintext_attack(cipher)
+    # Run text encryption/decryption test
+    test_encrypt_decrypt_text()
