@@ -117,56 +117,42 @@ class main:
         decrypted_text = self.hex_to_text(unpad(decrypted_data, 64).decode())
         return decrypted_text
 
-    def _apply_permutation_network(self, data, nonce, decrypt=False):
-        """
-        Apply a stronger and more complex permutation network on the data.
-        """
-        num_blocks = len(data) // 64  # 64-byte blocks (larger than AES block size)
-        processed_data = bytearray()
-        for i in range(num_blocks):
-            block = data[i * 64: (i + 1) * 64]
-            round_key = self.round_keys[i % len(self.round_keys)]
-            if decrypt:
-                block = self._reverse_nonlinear_transform(block)
-            processed_block = self._nonlinear_transform(block, round_key)
-            processed_data.extend(processed_block)
-        return processed_data
+        def _nonlinear_transform(self, data, round_key):
+        data = np.frombuffer(data, dtype=np.uint8)
+        round_key = np.frombuffer(round_key, dtype=np.uint8)
 
-    def _nonlinear_transform(self, data, round_key):
-    data = np.frombuffer(data, dtype=np.uint8)
-    round_key = np.frombuffer(round_key, dtype=np.uint8)
-    
-    # XOR with round key
-    data ^= round_key[:len(data)]
-    
-    # Substitution
-    data = np.take(SBOX, data)
-    
-    # Rotate array for diffusion
-    data = np.roll(data, 7)  
-    
-    # Lightweight mixing (diffusion) step
-    data ^= np.roll(data, 3)
-    
-    return data.tobytes()
+        # XOR with round key
+        data ^= round_key[:len(data)]
+
+        # Substitution
+        data = np.take(SBOX, data)
+
+        # Rotate array for diffusion
+        data = np.roll(data, 7)  
+
+        # Lightweight mixing (diffusion) step
+        data ^= np.roll(data, 3)
+
+        return data.tobytes()
 
     def _reverse_nonlinear_transform(self, data, round_key):
-    data = np.frombuffer(data, dtype=np.uint8)
-    
-    # Reverse lightweight mixing
-    data ^= np.roll(data, 3)
-    
-    # Reverse rotation
-    data = np.roll(data, -7)
-    
-    # Inverse substitution
-    data = np.take(INVERSE_SBOX, data)
-    
-    # XOR with round key
-    round_key = np.frombuffer(round_key, dtype=np.uint8)
-    data ^= round_key[:len(data)]
-    
-    return data.tobytes()
+        data = np.frombuffer(data, dtype=np.uint8)
+
+        # Reverse lightweight mixing
+        data ^= np.roll(data, 3)
+
+        # Reverse rotation
+        data = np.roll(data, -7)
+
+        # Inverse substitution
+        data = np.take(INVERSE_SBOX, data)
+
+        # XOR with round key
+        round_key = np.frombuffer(round_key, dtype=np.uint8)
+        data ^= round_key[:len(data)]
+
+        return data.tobytes()
+
 
     def _generate_mac(self, data):
         """
