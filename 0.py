@@ -62,16 +62,20 @@ class main:
         return encrypted_data, mac, nonce
 
     def decrypt(self, encrypted_data, mac, nonce):
-        """
-        Decrypt the data using multiple layers of encryption and verify the MAC.
-        """
-        if mac != self._generate_mac(encrypted_data):
-            raise ValueError("MAC verification failed")
-        decrypted_data = self._apply_permutation_network(encrypted_data, nonce, decrypt=True)
-        
-        # Convert the decrypted data from hex back to text
-        decrypted_text = self.hex_to_text(unpad(decrypted_data, 128).decode())
-        return decrypted_text
+    """
+    Decrypt the data using multiple layers of encryption and verify the MAC.
+    """
+    if mac != self._generate_mac(encrypted_data):
+        raise ValueError("MAC verification failed")
+    
+    decrypted_data = self._apply_permutation_network(encrypted_data, nonce, decrypt=True)
+    
+    # Ensure proper padding is removed after decryption
+    decrypted_data = unpad(decrypted_data, 128)  # Make sure this is correctly aligned with block size
+
+    # Convert the decrypted data from hex back to text
+    decrypted_text = self.hex_to_text(decrypted_data.decode())  # Convert from bytes to text after unpadding
+    return decrypted_text
 
     def _apply_permutation_network(self, data, nonce, decrypt=False):
         """
