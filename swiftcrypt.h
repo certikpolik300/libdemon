@@ -1,54 +1,57 @@
-#ifndef SWIFTCRYPT_H
-#define SWIFTCRYPT_H
+#ifndef SWIFTCrypt_H
+#define SWIFTCrypt_H
 
 #include <iostream>
-#include <vector>
-#include <string>
 #include <fstream>
-#include <sstream>
+#include <string>
+#include <vector>
 #include <openssl/rand.h>
 
-#define BLOCK_SIZE 128 // Example block size, you can modify as per requirement
-#define KEY_SIZE 1024
+// Constants for block size and key size
+#define BLOCK_SIZE 128 // 128 bits block size
+#define KEY_SIZE 1024 // 1024 bits key size
 
+// S-Box and Inverse S-Box (unique S-box must be defined)
+extern uint8_t SBox[256];
+extern uint8_t InvSBox[256];
+
+// Round constants (RCON) for key expansion
+extern uint32_t RCON[10];
+
+// SwiftCrypt class definition
 class SwiftCrypt {
 public:
-    // Constructor to initialize keys and IVs
-    SwiftCrypt(const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv_forward, const std::vector<uint8_t>& iv_backward);
-    
-    // Encrypt and Decrypt functions for file and text
-    void encrypt_file(const std::string& input_file, const std::string& output_file);
-    void decrypt_file(const std::string& input_file, const std::string& output_file);
-    
-    std::string encrypt_text(const std::string& plaintext);
-    std::string decrypt_text(const std::string& ciphertext);
-    
+    SwiftCrypt();
+    ~SwiftCrypt();
+
+    // Key generation function
+    void generateKey(uint8_t* key);
+
+    // Encryption/Decryption functions
+    void encrypt(const uint8_t* input, uint8_t* output, uint8_t* iv_forward, uint8_t* iv_backward);
+    void decrypt(const uint8_t* input, uint8_t* output, uint8_t* iv_forward, uint8_t* iv_backward);
+
+    // File encryption/decryption
+    bool encryptFile(const std::string& inputFile, const std::string& outputFile, uint8_t* iv_forward, uint8_t* iv_backward);
+    bool decryptFile(const std::string& inputFile, const std::string& outputFile, uint8_t* iv_forward, uint8_t* iv_backward);
+
+    // Text encryption/decryption
+    bool encryptText(const std::string& inputText, std::string& outputText, uint8_t* iv_forward, uint8_t* iv_backward);
+    bool decryptText(const std::string& inputText, std::string& outputText, uint8_t* iv_forward, uint8_t* iv_backward);
+
 private:
-    std::vector<uint8_t> key;
-    std::vector<uint8_t> iv_forward;
-    std::vector<uint8_t> iv_backward;
-    
-    // Internal helper functions
-    void generate_round_keys();
-    std::vector<uint8_t> xor_blocks(const std::vector<uint8_t>& block1, const std::vector<uint8_t>& block2);
-    std::vector<uint8_t> encrypt_block(const std::vector<uint8_t>& block);
-    std::vector<uint8_t> decrypt_block(const std::vector<uint8_t>& block);
-    
-    // S-Box and inverse S-Box functions
-    std::vector<uint8_t> sbox(const std::vector<uint8_t>& input);
-    std::vector<uint8_t> inverse_sbox(const std::vector<uint8_t>& input);
-    
-    // Key expansion and RCON (Round Constants)
-    void expand_key();
-    std::vector<uint8_t> apply_rcon(const std::vector<uint8_t>& key, int round);
-    
-    // Encryption/Decryption logic with chaining and garbling effects
-    void chaining_and_garbling(std::vector<uint8_t>& block, bool is_encryption);
-    void print_hex(const std::vector<uint8_t>& data);
-    
-    // Utility functions for file reading and writing
-    void read_file(const std::string& file_name, std::vector<uint8_t>& data);
-    void write_file(const std::string& file_name, const std::vector<uint8_t>& data);
+    // Helper functions for key expansion and operations
+    void applySBox(uint8_t* block);
+    void applyInvSBox(uint8_t* block);
+    void xorBlocks(uint8_t* block, uint8_t* iv);
+    void garble(uint8_t* block);
+
+    // Encryption and decryption round key expansion
+    void keyExpansion(const uint8_t* key, uint8_t* roundKeys);
+
+    // File reading and writing
+    bool readFile(const std::string& filename, std::vector<uint8_t>& buffer);
+    bool writeFile(const std::string& filename, const std::vector<uint8_t>& buffer);
 };
 
-#endif
+#endif // SWIFTCrypt_H
