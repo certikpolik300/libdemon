@@ -1,47 +1,54 @@
-#ifndef SWIFTCrypt_H
-#define SWIFTCrypt_H
+#ifndef SWIFTCRYPT_H
+#define SWIFTCRYPT_H
 
+#include <iostream>
 #include <vector>
 #include <string>
-#include <iostream>
 #include <fstream>
 #include <sstream>
-#include <iomanip>
+#include <openssl/rand.h>
+
+#define BLOCK_SIZE 128 // Example block size, you can modify as per requirement
+#define KEY_SIZE 1024
 
 class SwiftCrypt {
 public:
-    // Constructor with 1024-bit key
-    SwiftCrypt(const std::vector<uint8_t>& key);
-    ~SwiftCrypt();
-
-    // Encryption and Decryption Functions
-    std::vector<uint8_t> encrypt_text(const std::vector<uint8_t>& plaintext);
-    std::vector<uint8_t> decrypt_text(const std::vector<uint8_t>& ciphertext);
-    void encrypt_file(const std::string& input_filename, const std::string& output_filename);
-    void decrypt_file(const std::string& input_filename, const std::string& output_filename);
-
-private:
-    // Helper functions
-    void generate_round_keys();
-    std::vector<uint8_t> apply_round(const std::vector<uint8_t>& data, int round);
-    std::vector<uint8_t> xor_blocks(const std::vector<uint8_t>& block1, const std::vector<uint8_t>& block2);
-    void print_hex(const std::vector<uint8_t>& data);
-    std::vector<uint8_t> garble_effect(const std::vector<uint8_t>& data);
-
-    // S-box and Inverse S-box (custom, static, not generated)
-    static const std::vector<uint8_t> S_BOX;
-    static const std::vector<uint8_t> INVERSE_S_BOX;
-
-    // Round constants (RCON)
-    static const std::vector<uint8_t> RCON;
-
-    // Key and Round keys
-    std::vector<uint8_t> key_;
-    std::vector<std::vector<uint8_t>> round_keys_;
+    // Constructor to initialize keys and IVs
+    SwiftCrypt(const std::vector<uint8_t>& key, const std::vector<uint8_t>& iv_forward, const std::vector<uint8_t>& iv_backward);
     
-    // IVs for encryption and decryption
-    std::vector<uint8_t> iv_forward_;
-    std::vector<uint8_t> iv_backward_;
+    // Encrypt and Decrypt functions for file and text
+    void encrypt_file(const std::string& input_file, const std::string& output_file);
+    void decrypt_file(const std::string& input_file, const std::string& output_file);
+    
+    std::string encrypt_text(const std::string& plaintext);
+    std::string decrypt_text(const std::string& ciphertext);
+    
+private:
+    std::vector<uint8_t> key;
+    std::vector<uint8_t> iv_forward;
+    std::vector<uint8_t> iv_backward;
+    
+    // Internal helper functions
+    void generate_round_keys();
+    std::vector<uint8_t> xor_blocks(const std::vector<uint8_t>& block1, const std::vector<uint8_t>& block2);
+    std::vector<uint8_t> encrypt_block(const std::vector<uint8_t>& block);
+    std::vector<uint8_t> decrypt_block(const std::vector<uint8_t>& block);
+    
+    // S-Box and inverse S-Box functions
+    std::vector<uint8_t> sbox(const std::vector<uint8_t>& input);
+    std::vector<uint8_t> inverse_sbox(const std::vector<uint8_t>& input);
+    
+    // Key expansion and RCON (Round Constants)
+    void expand_key();
+    std::vector<uint8_t> apply_rcon(const std::vector<uint8_t>& key, int round);
+    
+    // Encryption/Decryption logic with chaining and garbling effects
+    void chaining_and_garbling(std::vector<uint8_t>& block, bool is_encryption);
+    void print_hex(const std::vector<uint8_t>& data);
+    
+    // Utility functions for file reading and writing
+    void read_file(const std::string& file_name, std::vector<uint8_t>& data);
+    void write_file(const std::string& file_name, const std::vector<uint8_t>& data);
 };
 
-#endif // SWIFTCrypt_H
+#endif
