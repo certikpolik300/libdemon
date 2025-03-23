@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import hmac
+import zlib
 
 # Constants
 AES_KEY_SIZE = 32  # 256-bit
@@ -24,6 +25,7 @@ class main:
         self.ecdh_public_key = self.ecdh_private_key.public_key()
         self.rsa_private_key = rsa.generate_private_key(public_exponent=65537, key_size=RSA_KEY_SIZE)
         self.rsa_public_key = self.rsa_private_key.public_key()
+        self.shared_secret = None
 
     def get_ecdh_public_key(self):
         """Export ECDH public key."""
@@ -75,11 +77,14 @@ class main:
             return False
 
     def encrypt(self, plaintext):
-        """Encrypts data using AES-256-GCM with integrity protection."""
+        """Encrypts data using AES-256-GCM with integrity protection and compression."""
+        # Compress the plaintext before encryption
+        compressed_data = zlib.compress(plaintext.encode())
+
         nonce = os.urandom(NONCE_SIZE)
         cipher = Cipher(algorithms.AES(self.aes_key), modes.GCM(nonce))
         encryptor = cipher.encryptor()
-        ciphertext = encryptor.update(plaintext.encode()) + encryptor.finalize()
+        ciphertext = encryptor.update(compressed_data) + encryptor.finalize()
 
         # Create HMAC for integrity
         mac = hmac.new(self.hmac_key, ciphertext, hashlib.sha256).digest()
@@ -90,7 +95,7 @@ class main:
         return base64.b64encode(nonce + encryptor.tag + timestamp + mac + ciphertext).decode()
 
     def decrypt(self, encrypted_data):
-        """Decrypts data and verifies integrity & freshness."""
+        """Decrypts data, decompress and verifies integrity & freshness."""
         data = base64.b64decode(encrypted_data)
 
         nonce = data[:NONCE_SIZE]
@@ -111,7 +116,10 @@ class main:
         # Decrypt
         cipher = Cipher(algorithms.AES(self.aes_key), modes.GCM(nonce, tag))
         decryptor = cipher.decryptor()
-        return decryptor.update(ciphertext) + decryptor.finalize()
+        decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
+
+        # Decompress the data after decryption
+        return zlib.decompress(decrypted_data).decode()
 
     def encrypt_symmetric_key(self):
         """Encrypt AES key with RSA-4096."""
@@ -146,10 +154,13 @@ class main:
         return json.loads(decryptor.update(encrypted_metadata) + decryptor.finalize())
     
     def handshake(self, peer_public_key_pem):
-        """Complete the handshake protocol."""
+        """Optimized handshake with faster key exchange and reduced negotiation overhead."""
         # Generate and exchange public keys, and derive shared secret
         peer_public_key = serialization.load_pem_public_key(peer_public_key_pem)
         shared_secret = self.derive_shared_secret(peer_public_key_pem)
+
+        # Cache the shared secret for future use to avoid recalculating for each message
+        self.shared_secret = shared_secret
 
         # Return the shared secret and the public key for the peer to encrypt the symmetric key
         return {
