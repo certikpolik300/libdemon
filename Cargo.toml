@@ -1,6 +1,9 @@
 [dependencies]
 openssl = "0.10"
+rsa = "0.6"
+ecdsa = "0.11"
+aes = "0.7"
 hmac = "0.11"
+sha2 = "0.9"
+zlib = "0.2"
 base64 = "0.13"
-zlib = "0.10"
-rand = "0.8"
