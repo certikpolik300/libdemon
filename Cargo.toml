@@ -1,0 +1,6 @@
+[dependencies]
+openssl = "0.10"
+hmac = "0.11"
+base64 = "0.13"
+zlib = "0.10"
+rand = "0.8"
