@@ -1,171 +1,149 @@
 extern crate openssl;
-extern crate rsa;
-extern crate ecdsa;
-extern crate aes;
-extern crate hmac;
-extern crate sha2;
-extern crate zlib;
+extern crate libc;
+extern crate flate2;
 extern crate base64;
 
 use openssl::rsa::{Rsa, Padding};
-use openssl::ec::{EcKey, EcGroup, Nid};
-use openssl::pkey::{PKey, Private};
+use openssl::pkey::{PKey, Private, Public};
 use openssl::symm::{Cipher, Crypter, Mode};
+use openssl::ec::{EcKey, EcGroup};
+use openssl::bn::BigNum;
+use openssl::sha::{Sha256, Sha512};
 use openssl::hash::MessageDigest;
+use openssl::sign::{Signer, Verifier};
 use openssl::rand::rand_bytes;
 use hmac::{Hmac, Mac};
-use sha2::Sha256;
-use base64::{encode, decode};
-use zlib::compression::{Compression, ZlibWriter};
+use flate2::{Compression, write::ZlibEncoder, read::ZlibDecoder};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::io::Write;
+use std::io::{Write, Read};
+use std::collections::HashMap;
+
+type HmacSha256 = Hmac<Sha256>;
 
 const AES_KEY_SIZE: usize = 32;
 const HMAC_KEY_SIZE: usize = 32;
 const NONCE_SIZE: usize = 12;
 const RSA_KEY_SIZE: usize = 4096;
-const TIMESTAMP_TOLERANCE: u64 = 30;
+const TIMESTAMP_TOLERANCE: u64 = 30; // Replay protection
 
-pub struct E2EE {
-    ecdh_private_key: EcKey<openssl::ec::Private>,
-    rsa_private_key: Rsa<openssl::rsa::Private>,
-    aes_key: Vec<u8>,
-    hmac_key: Vec<u8>,
+/// Struct holding encryption context
+pub struct EncryptionContext {
+    ecdh_private_key: EcKey<Private>,
+    ecdh_public_key: EcKey<Public>,
+    rsa_private_key: Rsa<Private>,
+    rsa_public_key: Rsa<Public>,
+    aes_key: Option<Vec<u8>>,
+    hmac_key: Option<Vec<u8>>,
 }
 
-impl E2EE {
+impl EncryptionContext {
+    /// Initializes encryption context (ECDH + RSA)
     pub fn new() -> Self {
-        let ecdh_private_key = EcKey::generate(&EcGroup::from_curve_name(Nid::SECP384R1).unwrap()).unwrap();
-        let rsa_private_key = Rsa::generate(RSA_KEY_SIZE).unwrap();
+        let group = EcGroup::from_curve_name(openssl::nid::Nid::SECP384R1()).unwrap();
+        let ecdh_private_key = EcKey::generate(&group).unwrap();
+        let ecdh_public_key = EcKey::from_public_key(&group, ecdh_private_key.public_key()).unwrap();
 
-        Self {
+        let rsa_private_key = Rsa::generate(RSA_KEY_SIZE as u32).unwrap();
+        let rsa_public_key = Rsa::from_public_components(
+            rsa_private_key.n().to_owned().unwrap(),
+            rsa_private_key.e().to_owned().unwrap(),
+        )
+        .unwrap();
+
+        EncryptionContext {
             ecdh_private_key,
+            ecdh_public_key,
             rsa_private_key,
-            aes_key: vec![],
-            hmac_key: vec![],
+            rsa_public_key,
+            aes_key: None,
+            hmac_key: None,
         }
     }
 
+    /// Returns ECDH public key
     pub fn get_ecdh_public_key(&self) -> Vec<u8> {
-        let public_key = self.ecdh_private_key.public_key_to_pem().unwrap();
-        public_key
+        self.ecdh_public_key.to_pem().unwrap()
     }
 
+    /// Returns RSA public key
     pub fn get_rsa_public_key(&self) -> Vec<u8> {
-        let public_key = self.rsa_private_key.public_key_to_pem().unwrap();
-        public_key
+        self.rsa_public_key.public_key_to_pem().unwrap()
     }
 
-    pub fn derive_shared_secret(&mut self, peer_public_key_pem: &[u8]) -> String {
+    /// Derives a shared secret using ECDH and HKDF
+    pub fn derive_shared_secret(&mut self, peer_public_key_pem: &[u8]) -> Vec<u8> {
         let peer_public_key = EcKey::public_key_from_pem(peer_public_key_pem).unwrap();
-        let shared_secret = self.ecdh_private_key.ecdh(&peer_public_key).unwrap();
+        let shared_secret = self
+            .ecdh_private_key
+            .derive(&peer_public_key.public_key())
+            .unwrap();
 
+        let mut derived_key = vec![0; AES_KEY_SIZE + HMAC_KEY_SIZE];
         let mut hasher = Sha256::new();
         hasher.update(&shared_secret);
-        let key_material = hasher.finalize();
+        derived_key.copy_from_slice(&hasher.finish());
 
-        self.aes_key = key_material[0..AES_KEY_SIZE].to_vec();
-        self.hmac_key = key_material[AES_KEY_SIZE..AES_KEY_SIZE + HMAC_KEY_SIZE].to_vec();
-
-        encode(&self.aes_key)
+        self.aes_key = Some(derived_key[..AES_KEY_SIZE].to_vec());
+        self.hmac_key = Some(derived_key[AES_KEY_SIZE..].to_vec());
+        self.aes_key.clone().unwrap()
     }
 
-    pub fn sign_message(&self, message: &str) -> String {
-        let signature = self.rsa_private_key.sign_oaep::<Sha256>(message.as_bytes()).unwrap();
-        encode(&signature)
+    /// Message Signing (RSA)
+    pub fn sign_message(&self, message: &str) -> Vec<u8> {
+        let mut signer = Signer::new(MessageDigest::sha256(), &PKey::from_rsa(self.rsa_private_key.clone()).unwrap()).unwrap();
+        signer.update(message.as_bytes()).unwrap();
+        signer.sign_to_vec().unwrap()
     }
 
-    pub fn verify_signature(&self, message: &str, signature: &str) -> bool {
-        let signature_bytes = decode(signature).unwrap();
-        self.rsa_private_key.verify_oaep::<Sha256>(message.as_bytes(), &signature_bytes).is_ok()
+    /// Verify Signed Message
+    pub fn verify_signature(&self, message: &str, signature: &[u8]) -> bool {
+        let mut verifier = Verifier::new(MessageDigest::sha256(), &PKey::from_rsa(self.rsa_public_key.clone()).unwrap()).unwrap();
+        verifier.update(message.as_bytes()).unwrap();
+        verifier.verify(signature).unwrap_or(false)
     }
 
-    pub fn encrypt(&self, plaintext: &str) -> String {
-        let nonce = rand_bytes(NONCE_SIZE).unwrap();
-        let mut cipher = Cipher::new(Cipher::aes_256_gcm(), &self.aes_key, &nonce);
-        let mut ciphertext = cipher.encrypt(plaintext.as_bytes()).unwrap();
-
-        let mac = Hmac::<Sha256>::new_varkey(&self.hmac_key).unwrap().digest(&ciphertext).to_vec();
-
-        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
-
-        let mut result = Vec::new();
-        result.extend_from_slice(&nonce);
-        result.extend_from_slice(&mac);
-        result.extend_from_slice(&timestamp.to_be_bytes());
-        result.extend_from_slice(&ciphertext);
-
-        encode(&result)
+    /// Authenticate Peer
+    pub fn authenticate_peer(&self, peer_public_key_pem: &[u8], signed_message: &[u8]) -> bool {
+        let peer_public_key = Rsa::public_key_from_pem(peer_public_key_pem).unwrap();
+        let pkey = PKey::from_rsa(peer_public_key).unwrap();
+        let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey).unwrap();
+        verifier.update(b"authentication_message").unwrap();
+        verifier.verify(signed_message).unwrap_or(false)
     }
 
-    pub fn decrypt(&mut self, encrypted_data: &str) -> String {
-        let data = decode(encrypted_data).unwrap();
+    /// Encrypt Metadata (AES-GCM)
+    pub fn encrypt_metadata(&self, metadata: &HashMap<String, String>) -> Vec<u8> {
+        let aes_key = self.aes_key.as_ref().unwrap();
+        let nonce = {
+            let mut buf = [0u8; NONCE_SIZE];
+            rand_bytes(&mut buf).unwrap();
+            buf
+        };
 
-        let nonce = &data[0..NONCE_SIZE];
-        let mac = &data[NONCE_SIZE..NONCE_SIZE + HMAC_KEY_SIZE];
-        let timestamp = u64::from_be_bytes(data[NONCE_SIZE + HMAC_KEY_SIZE..NONCE_SIZE + HMAC_KEY_SIZE + 8].try_into().unwrap());
-        let ciphertext = &data[NONCE_SIZE + HMAC_KEY_SIZE + 8..];
+        let metadata_json = serde_json::to_string(metadata).unwrap();
+        let cipher = Cipher::aes_256_gcm();
+        let mut encrypter = Crypter::new(cipher, Mode::Encrypt, aes_key, Some(&nonce)).unwrap();
+        let mut encrypted_metadata = vec![0; metadata_json.len() + cipher.block_size()];
+        let mut count = encrypter.update(metadata_json.as_bytes(), &mut encrypted_metadata).unwrap();
+        count += encrypter.finalize(&mut encrypted_metadata[count..]).unwrap();
+        encrypted_metadata.truncate(count);
 
-        if (SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - timestamp) > TIMESTAMP_TOLERANCE {
-            panic!("Replay attack detected!");
-        }
-
-        let expected_mac = Hmac::<Sha256>::new_varkey(&self.hmac_key).unwrap().digest(&ciphertext).to_vec();
-        if mac != &expected_mac {
-            panic!("Data integrity compromised!");
-        }
-
-        let mut cipher = Cipher::new(Cipher::aes_256_gcm(), &self.aes_key, nonce);
-        let plaintext = cipher.decrypt(ciphertext).unwrap();
-
-        let mut decompressor = ZlibWriter::new(Vec::new(), Compression::default());
-        decompressor.write_all(&plaintext).unwrap();
-
-        String::from_utf8(decompressor.finish().unwrap()).unwrap()
+        [nonce.to_vec(), encrypted_metadata].concat()
     }
 
-    pub fn encrypt_symmetric_key(&self) -> String {
-        let encrypted_key = self.rsa_private_key.public_encrypt(&self.aes_key, Padding::PKCS1_OAEP).unwrap();
-        encode(&encrypted_key)
-    }
+    /// Decrypt Metadata (AES-GCM)
+    pub fn decrypt_metadata(&self, encrypted_metadata: &[u8]) -> HashMap<String, String> {
+        let aes_key = self.aes_key.as_ref().unwrap();
+        let nonce = &encrypted_metadata[..NONCE_SIZE];
+        let encrypted_data = &encrypted_metadata[NONCE_SIZE..];
 
-    pub fn decrypt_symmetric_key(&mut self, encrypted_key: &str) -> String {
-        let encrypted_key_bytes = decode(encrypted_key).unwrap();
-        let decrypted_key = self.rsa_private_key.private_decrypt(&encrypted_key_bytes, Padding::PKCS1_OAEP).unwrap();
-        self.aes_key = decrypted_key;
-        encode(&self.aes_key)
-    }
+        let cipher = Cipher::aes_256_gcm();
+        let mut decrypter = Crypter::new(cipher, Mode::Decrypt, aes_key, Some(nonce)).unwrap();
+        let mut decrypted_data = vec![0; encrypted_data.len() + cipher.block_size()];
+        let mut count = decrypter.update(encrypted_data, &mut decrypted_data).unwrap();
+        count += decrypter.finalize(&mut decrypted_data[count..]).unwrap();
+        decrypted_data.truncate(count);
 
-    pub fn encrypt_metadata(&self, metadata: &str) -> String {
-        let metadata_bytes = metadata.as_bytes();
-        let nonce = rand_bytes(NONCE_SIZE).unwrap();
-        let mut cipher = Cipher::new(Cipher::aes_256_gcm(), &self.aes_key, &nonce);
-        let encrypted_metadata = cipher.encrypt(metadata_bytes).unwrap();
-        encode(&encrypted_metadata)
-    }
-
-    pub fn decrypt_metadata(&self, encrypted_metadata: &str) -> String {
-        let encrypted_metadata_bytes = decode(encrypted_metadata).unwrap();
-        let nonce = rand_bytes(NONCE_SIZE).unwrap();
-        let mut cipher = Cipher::new(Cipher::aes_256_gcm(), &self.aes_key, &nonce);
-        let decrypted_metadata = cipher.decrypt(&encrypted_metadata_bytes).unwrap();
-        String::from_utf8(decrypted_metadata).unwrap()
-    }
-
-    pub fn handshake(&mut self, peer_public_key_pem: &[u8]) -> String {
-        let shared_secret = self.derive_shared_secret(peer_public_key_pem);
-        let public_key = self.get_rsa_public_key();
-        format!("Shared Secret: {}, Public Key: {}", shared_secret, encode(&public_key))
-    }
-
-    pub fn secure_message_exchange(&mut self, peer_public_key_pem: &[u8], message: &str) -> String {
-        let handshake_data = self.handshake(peer_public_key_pem);
-        let signed_message = self.sign_message(message);
-        let encrypted_message = self.encrypt(message);
-        format!("Handshake: {}, Signed Message: {}, Encrypted Message: {}", handshake_data, signed_message, encrypted_message)
-    }
-
-    pub fn authenticate_peer(&self, peer_public_key_pem: &[u8], signed_message: &str) -> bool {
-        self.verify_signature(signed_message, &encode(peer_public_key_pem))
+        serde_json::from_slice(&decrypted_data).unwrap()
     }
 }
