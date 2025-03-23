@@ -1,205 +1,159 @@
-extern crate openssl;
-extern crate libc;
-extern crate flate2;
-extern crate base64;
-extern crate serde_json;
-extern crate hmac;
-
-use openssl::rsa::{Rsa, Padding};
-use openssl::pkey::{PKey, Private, Public};
-use openssl::symm::{Cipher, Crypter, Mode};
-use openssl::ec::{EcKey, EcGroup};
-use openssl::bn::BigNum;
-use openssl::sha::{Sha256, Sha512};
-use openssl::hash::MessageDigest;
-use openssl::sign::{Signer, Verifier};
-use openssl::rand::rand_bytes;
-use hmac::{Hmac, Mac};
-use flate2::{Compression, write::ZlibEncoder, read::ZlibDecoder};
+use openssl::asymmetric::{rsa, ec};
+use openssl::cipher::{Cipher, SymmetricCipher};
+use openssl::hash::{MessageDigest, Hasher};
+use openssl::kdf::hkdf;
+use openssl::pkey::{PKey, Private};
+use openssl::rsa::Padding;
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::io::{Write, Read};
 use std::collections::HashMap;
-use std::fs::{File, OpenOptions};
-use std::io::{Write as IoWrite, Read as IoRead};
+use rand::Rng;
+use base64::{encode, decode};
+use serde::{Serialize, Deserialize};
+use zlib::inflate_bytes;
 
-type HmacSha256 = Hmac<Sha256>;
-
-const AES_KEY_SIZE: usize = 32;
+const AES_KEY_SIZE: usize = 32; // 256-bit
 const HMAC_KEY_SIZE: usize = 32;
 const NONCE_SIZE: usize = 12;
 const RSA_KEY_SIZE: usize = 4096;
-const TIMESTAMP_TOLERANCE: u64 = 30; // Replay protection
+const TIMESTAMP_TOLERANCE: u64 = 30; // Seconds for replay attack protection
 
-/// Struct holding encryption context
-pub struct EncryptionContext {
-    ecdh_private_key: EcKey<Private>,
-    ecdh_public_key: EcKey<Public>,
-    rsa_private_key: Rsa<Private>,
-    rsa_public_key: Rsa<Public>,
+#[derive(Clone)]
+struct Main {
+    rsa_private_key: PKey<Private>,
+    rsa_public_key: PKey<Private>,
+    ephemeral_ecdh_private_key: Option<ec::PrivateKey>,
+    ephemeral_ecdh_public_key: Option<ec::PublicKey>,
+    shared_secret: Option<Vec<u8>>,
     aes_key: Option<Vec<u8>>,
     hmac_key: Option<Vec<u8>>,
 }
 
-impl EncryptionContext {
-    /// Initializes encryption context (ECDH + RSA)
-    pub fn new() -> Self {
-        let group = EcGroup::from_curve_name(openssl::nid::Nid::SECP384R1()).unwrap();
-        let ecdh_private_key = EcKey::generate(&group).unwrap();
-        let ecdh_public_key = EcKey::from_public_key(&group, ecdh_private_key.public_key()).unwrap();
+impl Main {
+    fn new() -> Self {
+        let rsa_private_key = PKey::generate_rsa(RSA_KEY_SIZE).expect("Failed to generate RSA key");
+        let rsa_public_key = rsa_private_key.public_key().expect("Failed to generate RSA public key");
 
-        let rsa_private_key = Rsa::generate(RSA_KEY_SIZE as u32).unwrap();
-        let rsa_public_key = Rsa::from_public_components(
-            rsa_private_key.n().to_owned().unwrap(),
-            rsa_private_key.e().to_owned().unwrap(),
-        )
-        .unwrap();
-
-        EncryptionContext {
-            ecdh_private_key,
-            ecdh_public_key,
+        Self {
             rsa_private_key,
             rsa_public_key,
+            ephemeral_ecdh_private_key: None,
+            ephemeral_ecdh_public_key: None,
+            shared_secret: None,
             aes_key: None,
             hmac_key: None,
         }
     }
 
-    /// Returns ECDH public key
-    pub fn get_ecdh_public_key(&self) -> Vec<u8> {
-        self.ecdh_public_key.to_pem().unwrap()
+    fn generate_ephemeral_keys(&mut self) {
+        let private_key = ec::PrivateKey::generate(ec::EcGroup::from_curve_name(openssl::nid::Nid::X9_62_PRIME256V1).unwrap())
+            .expect("Failed to generate ephemeral ECDH key");
+        let public_key = private_key.public_key();
+        self.ephemeral_ecdh_private_key = Some(private_key);
+        self.ephemeral_ecdh_public_key = Some(public_key);
     }
 
-    /// Returns RSA public key
-    pub fn get_rsa_public_key(&self) -> Vec<u8> {
-        self.rsa_public_key.public_key_to_pem().unwrap()
+    fn get_ephemeral_ecdh_public_key(&self) -> Option<Vec<u8>> {
+        self.ephemeral_ecdh_public_key.as_ref().map(|pub_key| pub_key.to_pem().unwrap())
     }
 
-    /// Derives a shared secret using ECDH and HKDF
-    pub fn derive_shared_secret(&mut self, peer_public_key_pem: &[u8]) -> Vec<u8> {
-        let peer_public_key = EcKey::public_key_from_pem(peer_public_key_pem).unwrap();
-        let shared_secret = self
-            .ecdh_private_key
-            .derive(&peer_public_key.public_key())
-            .unwrap();
+    fn derive_shared_secret(&mut self, peer_public_key_pem: &[u8]) -> String {
+        self.generate_ephemeral_keys();
 
-        let mut derived_key = vec![0; AES_KEY_SIZE + HMAC_KEY_SIZE];
-        let mut hasher = Sha256::new();
-        hasher.update(&shared_secret);
-        derived_key.copy_from_slice(&hasher.finish());
+        let peer_public_key = PKey::public_key_from_pem(peer_public_key_pem).expect("Failed to load peer public key");
+        let shared_secret = self.ephemeral_ecdh_private_key.as_ref()
+            .expect("Ephemeral private key is not set")
+            .agree(&peer_public_key)
+            .expect("Failed to compute shared secret");
 
-        self.aes_key = Some(derived_key[..AES_KEY_SIZE].to_vec());
-        self.hmac_key = Some(derived_key[AES_KEY_SIZE..].to_vec());
-        self.aes_key.clone().unwrap()
+        let mut hkdf = hkdf::HKDF::new(MessageDigest::sha256(), &shared_secret);
+        let mut key_material = vec![0u8; AES_KEY_SIZE + HMAC_KEY_SIZE];
+        hkdf.derive(&mut key_material);
+
+        self.aes_key = Some(key_material[..AES_KEY_SIZE].to_vec());
+        self.hmac_key = Some(key_material[AES_KEY_SIZE..].to_vec());
+
+        encode(&self.aes_key.as_ref().unwrap())
     }
 
-    /// Message Signing (RSA)
-    pub fn sign_message(&self, message: &str) -> Vec<u8> {
-        let mut signer = Signer::new(MessageDigest::sha256(), &PKey::from_rsa(self.rsa_private_key.clone()).unwrap()).unwrap();
-        signer.update(message.as_bytes()).unwrap();
-        signer.sign_to_vec().unwrap()
+    fn sign_message(&self, message: &str) -> String {
+        let mut signer = self.rsa_private_key.signer(Padding::PKCS1v15).expect("Failed to create signer");
+        signer.update(message.as_bytes()).expect("Failed to sign message");
+        let signature = signer.finish().expect("Failed to finish signature");
+        encode(&signature)
     }
 
-    /// Verify Signed Message
-    pub fn verify_signature(&self, message: &str, signature: &[u8]) -> bool {
-        let mut verifier = Verifier::new(MessageDigest::sha256(), &PKey::from_rsa(self.rsa_public_key.clone()).unwrap()).unwrap();
-        verifier.update(message.as_bytes()).unwrap();
-        verifier.verify(signature).unwrap_or(false)
+    fn verify_signature(&self, message: &str, signature: &str) -> bool {
+        let signature_bytes = decode(signature).expect("Invalid base64 signature");
+        let mut verifier = self.rsa_public_key.verifier(Padding::PKCS1v15).expect("Failed to create verifier");
+        verifier.update(message.as_bytes()).expect("Failed to verify message");
+        verifier.finish(&signature_bytes).is_ok()
     }
 
-    /// Authenticate Peer
-    pub fn authenticate_peer(&self, peer_public_key_pem: &[u8], signed_message: &[u8]) -> bool {
-        let peer_public_key = Rsa::public_key_from_pem(peer_public_key_pem).unwrap();
-        let pkey = PKey::from_rsa(peer_public_key).unwrap();
-        let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey).unwrap();
-        verifier.update(b"authentication_message").unwrap();
-        verifier.verify(signed_message).unwrap_or(false)
-    }
-
-    /// Encrypt Metadata (AES-GCM)
-    pub fn encrypt_metadata(&self, metadata: &HashMap<String, String>) -> Vec<u8> {
-        let aes_key = self.aes_key.as_ref().unwrap();
-        let nonce = {
-            let mut buf = [0u8; NONCE_SIZE];
-            rand_bytes(&mut buf).unwrap();
-            buf
-        };
-
-        let metadata_json = serde_json::to_string(metadata).unwrap();
+    fn encrypt(&self, plaintext: &str) -> String {
+        let compressed_data = zlib::deflate_bytes(plaintext.as_bytes());
+        let nonce: Vec<u8> = rand::thread_rng().gen_iter().take(NONCE_SIZE).collect();
         let cipher = Cipher::aes_256_gcm();
-        let mut encrypter = Crypter::new(cipher, Mode::Encrypt, aes_key, Some(&nonce)).unwrap();
-        let mut encrypted_metadata = vec![0; metadata_json.len() + cipher.block_size()];
-        let mut count = encrypter.update(metadata_json.as_bytes(), &mut encrypted_metadata).unwrap();
-        count += encrypter.finalize(&mut encrypted_metadata[count..]).unwrap();
-        encrypted_metadata.truncate(count);
 
-        [nonce.to_vec(), encrypted_metadata].concat()
+        let mut encryptor = cipher.encryptor();
+        encryptor.set_iv(&nonce);
+
+        let mut ciphertext = encryptor.update(&compressed_data);
+        ciphertext.extend(encryptor.finalize());
+
+        let mac = hmac::Hmac::<MessageDigest>::new(MessageDigest::sha256(), self.hmac_key.as_ref().unwrap());
+        let mut mac_data = mac.finalize_vec(&ciphertext);
+
+        let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
+        let timestamp_bytes = timestamp.to_be_bytes();
+
+        let mut result = nonce;
+        result.extend(mac_data);
+        result.extend_from_slice(&timestamp_bytes);
+        result.extend(ciphertext);
+
+        encode(&result)
     }
 
-    /// Decrypt Metadata (AES-GCM)
-    pub fn decrypt_metadata(&self, encrypted_metadata: &[u8]) -> HashMap<String, String> {
-        let aes_key = self.aes_key.as_ref().unwrap();
-        let nonce = &encrypted_metadata[..NONCE_SIZE];
-        let encrypted_data = &encrypted_metadata[NONCE_SIZE..];
+    fn decrypt(&mut self, encrypted_data: &str) -> String {
+        let data = decode(encrypted_data).expect("Invalid base64 data");
 
-        let cipher = Cipher::aes_256_gcm();
-        let mut decrypter = Crypter::new(cipher, Mode::Decrypt, aes_key, Some(nonce)).unwrap();
-        let mut decrypted_data = vec![0; encrypted_data.len() + cipher.block_size()];
-        let mut count = decrypter.update(encrypted_data, &mut decrypted_data).unwrap();
-        count += decrypter.finalize(&mut decrypted_data[count..]).unwrap();
-        decrypted_data.truncate(count);
+        let nonce = &data[..NONCE_SIZE];
+        let mac = &data[NONCE_SIZE..NONCE_SIZE + HMAC_KEY_SIZE];
+        let timestamp = u64::from_be_bytes(data[NONCE_SIZE + HMAC_KEY_SIZE..NONCE_SIZE + HMAC_KEY_SIZE + 8].try_into().unwrap());
+        let ciphertext = &data[NONCE_SIZE + HMAC_KEY_SIZE + 8..];
 
-        serde_json::from_slice(&decrypted_data).unwrap()
-    }
-
-    /// Encrypt a file using AES-256-GCM
-    pub fn encrypt_file(&self, input_path: &str, output_path: &str) -> std::io::Result<()> {
-        let aes_key = self.aes_key.as_ref().expect("AES key not derived!");
-        let mut file = File::open(input_path)?;
-        let mut data = Vec::new();
-        file.read_to_end(&mut data)?;
-
-        let nonce = {
-            let mut buf = [0u8; NONCE_SIZE];
-            rand_bytes(&mut buf).unwrap();
-            buf
-        };
-
-        let cipher = Cipher::aes_256_gcm();
-        let mut encrypter = Crypter::new(cipher, Mode::Encrypt, aes_key, Some(&nonce)).unwrap();
-        let mut encrypted_data = vec![0; data.len() + cipher.block_size()];
-        let mut count = encrypter.update(&data, &mut encrypted_data).unwrap();
-        count += encrypter.finalize(&mut encrypted_data[count..]).unwrap();
-        encrypted_data.truncate(count);
-
-        let mut output_file = File::create(output_path)?;
-        output_file.write_all(&nonce)?;
-        output_file.write_all(&encrypted_data)?;
-        Ok(())
-    }
-
-    /// Decrypt a file using AES-256-GCM
-    pub fn decrypt_file(&self, input_path: &str, output_path: &str) -> std::io::Result<()> {
-        let aes_key = self.aes_key.as_ref().expect("AES key not derived!");
-        let mut file = File::open(input_path)?;
-        let mut encrypted_data = Vec::new();
-        file.read_to_end(&mut encrypted_data)?;
-
-        if encrypted_data.len() < NONCE_SIZE {
-            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid file format"));
+        if SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs() - timestamp > TIMESTAMP_TOLERANCE {
+            panic!("Replay attack detected!");
         }
 
-        let nonce = &encrypted_data[..NONCE_SIZE];
-        let encrypted_data = &encrypted_data[NONCE_SIZE..];
+        let expected_mac = hmac::Hmac::<MessageDigest>::new(MessageDigest::sha256(), self.hmac_key.as_ref().unwrap())
+            .finalize_vec(&ciphertext);
+        if expected_mac != mac {
+            panic!("Data integrity compromised!");
+        }
 
         let cipher = Cipher::aes_256_gcm();
-        let mut decrypter = Crypter::new(cipher, Mode::Decrypt, aes_key, Some(nonce)).unwrap();
-        let mut decrypted_data = vec![0; encrypted_data.len() + cipher.block_size()];
-        let mut count = decrypter.update(encrypted_data, &mut decrypted_data).unwrap();
-        count += decrypter.finalize(&mut decrypted_data[count..]).unwrap();
-        decrypted_data.truncate(count);
-
-        let mut output_file = File::create(output_path)?;
-        output_file.write_all(&decrypted_data)?;
-        Ok(())
+        let mut decryptor = cipher.decryptor();
+        decryptor.set_iv(nonce);
+        let decrypted_data = decryptor.update(&ciphertext).unwrap();
+        let decompressed_data = inflate_bytes(&decrypted_data).unwrap();
+        String::from_utf8(decompressed_data).unwrap()
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct HandshakeData {
+    shared_secret: String,
+    ephemeral_public_key: Option<Vec<u8>>,
+    public_key: Option<Vec<u8>>,
+}
+
+fn main() {
+    let main = Main::new();
+
+    // Simulate generating ephemeral keys and deriving shared secret
+    let peer_public_key_pem = vec![]; // Dummy public key
+    let shared_secret = main.derive_shared_secret(&peer_public_key_pem);
+
+    println!("Shared Secret: {}", shared_secret);
 }
