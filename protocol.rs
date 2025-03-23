@@ -2,6 +2,8 @@ extern crate openssl;
 extern crate libc;
 extern crate flate2;
 extern crate base64;
+extern crate serde_json;
+extern crate hmac;
 
 use openssl::rsa::{Rsa, Padding};
 use openssl::pkey::{PKey, Private, Public};
@@ -17,6 +19,8 @@ use flate2::{Compression, write::ZlibEncoder, read::ZlibDecoder};
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::{Write, Read};
 use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
+use std::io::{Write as IoWrite, Read as IoRead};
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -145,5 +149,57 @@ impl EncryptionContext {
         decrypted_data.truncate(count);
 
         serde_json::from_slice(&decrypted_data).unwrap()
+    }
+
+    /// Encrypt a file using AES-256-GCM
+    pub fn encrypt_file(&self, input_path: &str, output_path: &str) -> std::io::Result<()> {
+        let aes_key = self.aes_key.as_ref().expect("AES key not derived!");
+        let mut file = File::open(input_path)?;
+        let mut data = Vec::new();
+        file.read_to_end(&mut data)?;
+
+        let nonce = {
+            let mut buf = [0u8; NONCE_SIZE];
+            rand_bytes(&mut buf).unwrap();
+            buf
+        };
+
+        let cipher = Cipher::aes_256_gcm();
+        let mut encrypter = Crypter::new(cipher, Mode::Encrypt, aes_key, Some(&nonce)).unwrap();
+        let mut encrypted_data = vec![0; data.len() + cipher.block_size()];
+        let mut count = encrypter.update(&data, &mut encrypted_data).unwrap();
+        count += encrypter.finalize(&mut encrypted_data[count..]).unwrap();
+        encrypted_data.truncate(count);
+
+        let mut output_file = File::create(output_path)?;
+        output_file.write_all(&nonce)?;
+        output_file.write_all(&encrypted_data)?;
+        Ok(())
+    }
+
+    /// Decrypt a file using AES-256-GCM
+    pub fn decrypt_file(&self, input_path: &str, output_path: &str) -> std::io::Result<()> {
+        let aes_key = self.aes_key.as_ref().expect("AES key not derived!");
+        let mut file = File::open(input_path)?;
+        let mut encrypted_data = Vec::new();
+        file.read_to_end(&mut encrypted_data)?;
+
+        if encrypted_data.len() < NONCE_SIZE {
+            return Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid file format"));
+        }
+
+        let nonce = &encrypted_data[..NONCE_SIZE];
+        let encrypted_data = &encrypted_data[NONCE_SIZE..];
+
+        let cipher = Cipher::aes_256_gcm();
+        let mut decrypter = Crypter::new(cipher, Mode::Decrypt, aes_key, Some(nonce)).unwrap();
+        let mut decrypted_data = vec![0; encrypted_data.len() + cipher.block_size()];
+        let mut count = decrypter.update(encrypted_data, &mut decrypted_data).unwrap();
+        count += decrypter.finalize(&mut decrypted_data[count..]).unwrap();
+        decrypted_data.truncate(count);
+
+        let mut output_file = File::create(output_path)?;
+        output_file.write_all(&decrypted_data)?;
+        Ok(())
     }
 }
