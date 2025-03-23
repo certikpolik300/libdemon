@@ -17,7 +17,7 @@ NONCE_SIZE = 12
 RSA_KEY_SIZE = 4096
 TIMESTAMP_TOLERANCE = 30  # Seconds for replay attack protection
 
-class E2EEProtocol:
+class main:
     def __init__(self):
         """Initialize E2EE with ECDH key exchange and RSA encryption."""
         self.ecdh_private_key = ec.generate_private_key(ec.SECP384R1())  # Use a more secure curve
