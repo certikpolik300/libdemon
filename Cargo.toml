@@ -1,7 +1,0 @@
-[dependencies]
-openssl = "0.10"
-base64 = "0.13"
-zlib = "0.1"
-serde = "1.0"
-serde_json = "1.0"
-rand = "0.8"
