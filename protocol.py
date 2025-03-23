@@ -190,3 +190,58 @@ class main:
         if self.verify_signature(signed_message, peer_public_key_pem):
             return True
         return False
+
+    def encrypt_file(self, file_path, output_file_path):
+        """Encrypt a file using AES-256-GCM, integrity protection, and compression."""
+        with open(file_path, 'rb') as f:
+            # Read the entire file and compress it
+            file_data = f.read()
+            compressed_data = zlib.compress(file_data)
+
+        nonce = os.urandom(NONCE_SIZE)
+        cipher = Cipher(algorithms.AES(self.aes_key), modes.GCM(nonce))
+        encryptor = cipher.encryptor()
+        ciphertext = encryptor.update(compressed_data) + encryptor.finalize()
+
+        # Create HMAC for integrity
+        mac = hmac.new(self.hmac_key, ciphertext, hashlib.sha256).digest()
+
+        # Include timestamp for replay protection
+        timestamp = struct.pack(">Q", int(time.time()))
+
+        # Write the encrypted data to the output file
+        with open(output_file_path, 'wb') as out_file:
+            out_file.write(nonce + encryptor.tag + timestamp + mac + ciphertext)
+
+    def decrypt_file(self, encrypted_file_path, output_file_path):
+        """Decrypt an encrypted file, decompress it, and verify integrity."""
+        with open(encrypted_file_path, 'rb') as f:
+            encrypted_data = f.read()
+
+        nonce = encrypted_data[:NONCE_SIZE]
+        tag = encrypted_data[NONCE_SIZE:NONCE_SIZE+16]
+        timestamp = struct.unpack(">Q", encrypted_data[NONCE_SIZE+16:NONCE_SIZE+24])[0]
+        mac = encrypted_data[NONCE_SIZE+24:NONCE_SIZE+56]
+        ciphertext = encrypted_data[NONCE_SIZE+56:]
+
+        # Replay protection: check timestamp
+        if abs(time.time() - timestamp) > TIMESTAMP_TOLERANCE:
+            raise Exception("Replay attack detected!")
+
+        # Verify HMAC
+        expected_mac = hmac.new(self.hmac_key, ciphertext, hashlib.sha256).digest()
+        if not hmac.compare_digest(mac, expected_mac):
+            raise Exception("Data integrity compromised!")
+
+        # Decrypt
+        cipher = Cipher(algorithms.AES(self.aes_key), modes.GCM(nonce, tag))
+        decryptor = cipher.decryptor()
+        decrypted_data = decryptor.update(ciphertext) + decryptor.finalize()
+
+        # Decompress the data after decryption
+        decompressed_data = zlib.decompress(decrypted_data)
+
+        # Write the decrypted data to the output file
+        with open(output_file_path, 'wb') as out_file:
+            out_file.write(decompressed_data)
+
