@@ -21,30 +21,38 @@ TIMESTAMP_TOLERANCE = 30  # Seconds for replay attack protection
 class main:
     def __init__(self):
         """Initialize E2EE with ECDH key exchange and RSA encryption."""
-        self.ecdh_private_key = ec.generate_private_key(ec.SECP384R1())  # Use a more secure curve
-        self.ecdh_public_key = self.ecdh_private_key.public_key()
+        # Long-term keys
         self.rsa_private_key = rsa.generate_private_key(public_exponent=65537, key_size=RSA_KEY_SIZE)
         self.rsa_public_key = self.rsa_private_key.public_key()
+
+        # Ephemeral keys for each session (to ensure Forward Secrecy)
+        self.ephemeral_ecdh_private_key = None
+        self.ephemeral_ecdh_public_key = None
         self.shared_secret = None
+        self.aes_key = None
+        self.hmac_key = None
 
-    def get_ecdh_public_key(self):
-        """Export ECDH public key."""
-        return self.ecdh_public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
+    def generate_ephemeral_keys(self):
+        """Generate ephemeral ECDH keys for each session."""
+        self.ephemeral_ecdh_private_key = ec.generate_private_key(ec.SECP384R1())  # New ephemeral key pair
+        self.ephemeral_ecdh_public_key = self.ephemeral_ecdh_private_key.public_key()
 
-    def get_rsa_public_key(self):
-        """Export RSA public key."""
-        return self.rsa_public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo
-        )
+    def get_ephemeral_ecdh_public_key(self):
+        """Export ephemeral ECDH public key."""
+        if self.ephemeral_ecdh_public_key:
+            return self.ephemeral_ecdh_public_key.public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+        return None
 
     def derive_shared_secret(self, peer_public_key_pem):
-        """Derive shared secret using ECDH."""
+        """Derive shared secret using ephemeral ECDH."""
+        # Generate a new ephemeral key pair for each session to ensure Forward Secrecy
+        self.generate_ephemeral_keys()
+
         peer_public_key = serialization.load_pem_public_key(peer_public_key_pem)
-        shared_secret = self.ecdh_private_key.exchange(ec.ECDH(), peer_public_key)
+        shared_secret = self.ephemeral_ecdh_private_key.exchange(ec.ECDH(), peer_public_key)
 
         # Use HKDF to derive AES and HMAC keys
         kdf = HKDF(algorithm=hashes.SHA256(), length=AES_KEY_SIZE + HMAC_KEY_SIZE, salt=None, info=b'E2EE Key Derivation')
@@ -52,6 +60,8 @@ class main:
 
         self.aes_key = key_material[:AES_KEY_SIZE]
         self.hmac_key = key_material[AES_KEY_SIZE:]
+
+        # Return base64 encoded AES key
         return base64.b64encode(self.aes_key).decode()
 
     def sign_message(self, message):
@@ -154,22 +164,25 @@ class main:
         return json.loads(decryptor.update(encrypted_metadata) + decryptor.finalize())
     
     def handshake(self, peer_public_key_pem):
-        """Optimized handshake with faster key exchange and reduced negotiation overhead."""
-        # Generate and exchange public keys, and derive shared secret
-        peer_public_key = serialization.load_pem_public_key(peer_public_key_pem)
+        """Optimized handshake with Forward Secrecy."""
+        # Generate ephemeral keys for this session
+        ephemeral_public_key = self.get_ephemeral_ecdh_public_key()
+
+        # Derive shared secret using ephemeral ECDH key pair
         shared_secret = self.derive_shared_secret(peer_public_key_pem)
 
         # Cache the shared secret for future use to avoid recalculating for each message
         self.shared_secret = shared_secret
 
-        # Return the shared secret and the public key for the peer to encrypt the symmetric key
+        # Return ephemeral public key and the shared secret for RSA encryption of symmetric key
         return {
             "shared_secret": shared_secret,
+            "ephemeral_public_key": ephemeral_public_key,
             "public_key": self.get_rsa_public_key(),
         }
 
     def secure_message_exchange(self, peer_public_key_pem, message):
-        """Exchange a secure message (sign, encrypt, decrypt)."""
+        """Exchange a secure message (sign, encrypt, decrypt) with Forward Secrecy."""
         # Handshake to derive shared secret and public keys
         handshake_data = self.handshake(peer_public_key_pem)
         
@@ -244,4 +257,3 @@ class main:
         # Write the decrypted data to the output file
         with open(output_file_path, 'wb') as out_file:
             out_file.write(decompressed_data)
-
