@@ -1,0 +1,2330 @@
+Create in Python using my aes: https://github.com/pierrejacksoo/z/blob/main/aes.py a Chat Application with end-to-end encryption add only private-secreat peer*to-peer 2 person chats and add to it:
+1.1 Background
+Telegram is a widely used messaging application known for its user-friendly interface
+and robust features. It claims to allow users to send messages, photos, videos, and files
+securely across various platforms. With features like group chats, secret channels, and
+stickers Telegram has acquired a large user base worldwide, and became a popular choice
+for people around the world to promote their services or just chat with each other using
+fast and secure communication within this application.
+Encryption was one of the biggest reasons Telegram gained popularity after its release,
+by encrypting messages in such way that it ensured that only the intended recipients can
+access the content that went through the communication channel [1]. This made and is
+still making it nearly impossible for unauthorized parties, including hackers and
+governments, to intercept and decipher the communication. This level of encryption
+provides users with confidence, knowing that their conversations and shared media
+remain private and protected from spying eyes.
+Telegram offers end-to-end encryption as a fundamental feature of its platform. This
+means that messages sent through Telegram are encrypted on the sender's device and can
+only be decrypted by the intended recipient, ensuring that even Telegram servers cannot
+access the content. By promoting E2EE, Telegram underscores its commitment to user
+privacy and security, setting itself apart from other messaging
+1.2 Research problem
+Sometimes there is a gap between what developers/companies promise about their
+encryption and what they actually deliver. They might advertise high-end security
+measures, but in reality, there could be loopholes or backdoors that compromise users’
+privacy. This raises concerns about how effectively these apps (in this particular case
+Telegram) protect our sensitive conversations and data.
+9It's important to take a closer look at whether Telegram truly sticks to its encryption
+claims. While they are boasting forward thinking achievements like end-to-end
+encryption, it is crucial to assess whether it is actually implemented how it is intended.
+Other messaging applications, like Meta’s 3 applications (WhatsApp, Instagram,
+Facebook), have moved to full E2EE, Facebook Messenger have been announced the
+latest to implement it [2]. Only by thoroughly evaluating Telegram's encryption methods
+can users make informed decisions about their privacy and security when using the
+platform.
+1.3 Research goal and objective
+The aim of this research is
+
+To identify weaknesses in Telegram's encryption algorithm implementation,
+metadata handling and identity protection
+
+To offer insights into the platform's alignment with industry standards
+Objectives of the research are
+
+To provide a detailed analysis of the implementation’s security strengths and
+vulnerabilities
+
+To present constructive recommendations for potential improvements to
+Telegram's encryption
+1.4 Research questions
+This research will cover answers to following questions:
+Does Telegram effectively implement the encryption algorithms it claims to use?
+How does Telegram's encryption compare to industry standards?
+Are there any vulnerabilities or weaknesses in Telegram's encryption
+implementation?
+102 Theoretical background
+In this chapter, we dive into an extensive overview of encryption in messaging apps,
+exploring its significance for user privacy and data protection, common encryption
+algorithms utilized across various platforms, an analysis of Telegram's encryption claims
+in comparison to other messaging apps, and a review of previous research shedding light
+on the effectiveness of encryption and its potential weaknesses or vulnerabilities.
+2.1 Overview of Encryption in Messaging Apps
+Encryption plays a crucial role in safeguarding user privacy and ensuring the security of
+sensitive data transmitted through messaging applications. In an era of data breaches after
+data breaches and increasing concerns about online privacy encryption is one of the
+fundamental mechanisms that are serving communication channel protection from
+unauthorized access or interception. By encrypting messages, sensitive information is
+rendered indecipherable to anyone other than the intended recipient. Moreover,
+encryption fosters trust among users by assuring them that their personal conversations
+remain confidential and immune to surveillance by third parties, whether they are hackers,
+governmental agencies or malicious actors. Encryption plays a vital role in maintaining
+the integrity and trustworthiness of messaging platforms in the modern digital age.
+Messaging applications employ various encryption algorithms to secure communication
+channels and protect user data from unauthorized access. Among the most prevalent
+encryption techniques utilized in messaging apps are:
+
+AES: Widely regarded as one of the most secure symmetric encryption
+algorithms, AES employs a block cipher to encrypt and decrypt data using a
+symmetric key. Its robust security features and efficient performance make it a
+popular choice for securing messaging platforms against cyber threats [3].
+
+RSA: Asymmetric encryption algorithm, RSA, is frequently employed for key
+exchange and digital signatures in messaging applications. RSA relies on the
+mathematical complexity of factoring large prime numbers to ensure the
+confidentiality and authenticity of transmitted data [4].
+11
+ECC: Recognized for its efficiency and strong security properties. ECC is
+increasingly favored for securing messaging applications on mobile devices with
+limited computational resources. ECC offers comparable security to RSA but with
+shorter key lengths, making it particularly suitable for resource-constrained
+environments [5] [6].
+
+Signal Protocol (formerly known as TextSecure Protocol): Developed by Open
+Whisper Systems, the Signal Protocol is a modern encryption protocol widely
+adopted by popular messaging apps like Signal, WhatsApp, and Facebook
+Messenger [6]. It combines cryptographic techniques such as AES, RSA, and
+ECDH to provide end-to-end encryption, forward secrecy, and deniability,
+ensuring robust protection against eavesdropping and message tampering.
+2.2 Telegram’s Encryption Claims
+Telegram has positioned itself as a messaging platform that prioritizes user privacy and
+security, frequently emphasizing its encryption features as a key selling point. The
+following are some of the notable claims made by Telegram regarding its encryption
+practices:
+
+E2EE: Telegram claims to offer end-to-end encryption in its "Secret Chats"
+feature, which ensures that only the sender and recipient can access the contents
+of their messages. This form of encryption purportedly prevents intermediaries,
+including Telegram itself, from accessing message content during transmission.
+
+Secret Chats: Telegram promotes its "Secret Chats" as a secure communication
+mode that incorporates features like self-destructing messages, device-specific
+encryption keys, and the inability to forward messages or take screenshots. These
+measures are intended to enhance the privacy and confidentiality of conversations
+within the Secret Chats feature. E2EE is not encrypted anywhere else, other than
+this feature according to the official documentation [7].
+
+MTProto: Telegram has developed its encryption protocol called MTProto,
+which it claims offers robust security and performance benefits compared to other
+encryption standards. However, the specifics of MTProto's cryptographic design
+12and its level of scrutiny by independent security experts have been subjects of
+debate and criticism within the cybersecurity community.
+When compared to other messaging applications, Telegram's encryption standards and
+claims exhibit both similarities and differences:
+
+WhatsApp: WhatsApp, owned by Meta, boasts end-to-end encryption across all
+communication channels, not limited to specific chat modes like Telegram's
+Secret Chats. WhatsApp's encryption protocol is based on the Signal Protocol,
+renowned for its security and privacy features. Unlike Telegram, WhatsApp has
+implemented end-to-end encryption as a default feature for all users, enhancing
+the overall security posture of the platform.
+
+Signal: Signal is widely regarded as one of the most privacy-focused messaging
+apps, primarily due to its rigorous encryption standards and commitment to open-
+source transparency. Signal utilizes the Signal Protocol, which offers end-to-end
+encryption, forward secrecy, and deniability. Signal's encryption practices have
+undergone extensive third-party audits and scrutiny, contributing to its reputation
+as a secure messaging platform.
+
+Telegram vs. WhatsApp/Signal/Meta communication platforms: While
+Telegram emphasizes its encryption features, critics have raised concerns about
+the transparency and verifiability of its encryption protocols, particularly
+MTProto. Unlike WhatsApp and Signal, which have open-source encryption
+protocols and have undergone independent security audits, Telegram's encryption
+practices have faced scrutiny for their proprietary nature and limited transparency.
+Additionally, Telegram's default chat mode does not offer end-to-end encryption,
+potentially leaving user data vulnerable to interception by third parties, including
+Telegram itself as confirmed by the official Kaspersky blog [8].
+2.3 Previous Research on Messaging App Encryption
+Numerous studies have been conducted to evaluate the effectiveness of encryption
+mechanisms employed by various messaging platforms in protecting user privacy and
+securing communication channels. These studies often focus on assessing the strength of
+encryption protocols, analyzing potential vulnerabilities, and examining the extent to
+13which encryption practices align with stated security claims. For instance, independent
+security audits and evaluations have consistently affirmed the robustness of the Signal
+Protocol, used by Signal, WhatsApp, and other messaging apps [9]. Similarly,
+assessments of WhatsApp's encryption, which is based on the Signal Protocol, have
+generally confirmed its effectiveness in preventing unauthorized access to message
+content, while also highlighting potential weaknesses in key management practices and
+metadata leakage. On the other hand, scrutiny of Telegram's encryption practices,
+particularly its proprietary MTProto protocol, has raised questions about its security
+properties and level of scrutiny, emphasizing the need for independent analysis and
+auditability.
+Research on messaging app encryption has also identified various weaknesses and
+vulnerabilities in encryption implementations, highlighting potential risks to user privacy
+and data security. Additionally, vulnerabilities in encryption protocols, such as
+cryptographic weaknesses and implementation flaws, have been identified as potential
+avenues for exploitation by adversaries [10].
+Overall, previous research on messaging app encryption, as shown by these studies, has
+provided valuable insights into the strengths and weaknesses of encryption
+implementations. Ongoing scrutiny and analysis remain essential for identifying and
+addressing emerging threats to encryption security in an evolving threat landscape.
+143 Methodology
+This chapter describes the methods used to collect and analyze the data.
+3.1 Data Collection
+In this work the data is collected in two ways:
+1. By obtaining Telegram’s official documentation on encryption methods used
+in its service: This involves locating and reviewing any documentation provided
+by Telegram regarding their encryption methods. This documentation might
+include whitepapers, technical specifications, or developer documentation that
+details how encryption is implemented within the Telegram messaging platform.
+It's important to gather this information to understand the encryption algorithms
+and protocols used by Telegram.
+2. By conducting network traffic analysis to understand the data flow and
+encryption protocols: This step involves analyzing the network traffic generated
+by the Telegram application to understand how data is transmitted and encrypted.
+For this step I will be using two workstations with a network analysis tool called
+Wireshark to capture and inspect the traffic generated by Telegram. By examining
+the packets that leave and come to a Telegram client, it is possible to gain insights
+into the encryption protocols and algorithms used to secure communications. The
+setup is going to be two workstations both installed with:
+Telegram Desktop
+Wireshark
+Bluestacks Android Emulator (for Secret Chat mode only)
+Each of these steps is crucial for gaining a comprehensive understanding of how
+encryption is implemented within the Telegram messaging platform. It allows to combine
+theoretical knowledge from official documentation with practical insights gained from
+network traffic analysis.
+154 Analysis and Assessment of the Encryption
+In this chapter, we conduct a comparative analysis examining Telegram's encryption
+algorithms in contrast to established industry standards, evaluating the effectiveness of
+Telegram's encryption in safeguarding user data. Furthermore, we perform a vulnerability
+assessment to identify potential weaknesses or vulnerabilities in Telegram's encryption,
+assessing the robustness of its encryption against known attack vectors.
+4.1 Comparative Analysis
+4.1.1 Telegram's default encryption algorithm versus established industry
+standards
+Telegram's default encryption scheme on one hand presents a trade-off between speed
+and privacy. It utilizes a server-client encryption model powered by MTProto. Messages
+travel in an encrypted state between the sender’s device and Telegram's servers. This
+offers some protection against eavesdropping by malicious third parties. However, it is
+the most important to understand that Telegram retains the decryption keys. This grants
+them the ability to access your message content under specific conditions, such as legal
+obligations or security breaches on their servers.
+This approach prioritizes speed. The absence of end-to-end encryption by default allows
+for messages to zip through the system freely, potentially resulting in faster
+communication compared to services that employ a more robust encryption model. It's
+also worth noting that this method offers a baseline level of security compared to
+completely unencrypted communication channels.
+However, since nowadays privacy is a mandatory concern, Telegram's default encryption
+might not be sufficient. There are alternative messaging applications available that
+implement end-to-end encryption by default. This superior form of encryption scrambles
+messages in a way that makes them unreadable by anyone except the intended recipient
+and the sender. This eliminates even the messaging service's ability to access the content
+of your conversations, providing a significantly higher level of confidentiality.
+When it comes to security, popular messaging apps like WhatsApp and Signal take a
+different approach compared to Telegram. Both WhatsApp and Signal prioritize user
+16privacy by implementing end-to-end encryption as their default setting. This robust
+encryption method scrambles messages between devices, ensuring that only the sender
+and intended recipient can decipher the content. Not even WhatsApp or Signal themselves
+hold the decryption keys, offering a significantly higher level of confidentiality compared
+to Telegram's server-client encryption.
+There are, however, some trade-offs to consider. End-to-end encryption can introduce a
+slight delay in message delivery compared to server-client encryption. This is because the
+messages need to be encrypted on the sender's device, decrypted on the recipient's device,
+and this additional processing step can take a fraction of a second longer. To be exact,
+this negligible amount of time could favour the E2EE or the server-client encryption
+depending on connection strength, latency, message length, end user hardware and a
+plethora of other factors. As hardware technology is advancing and people live their lives
+more in such virtual spaces speed is not an issue anymore with simple message delivery.
+Through rigorous experimentation, we aim to evaluate the efficiency of modern
+encryption algorithms on these distinct platforms. Using a Python script, we conduct tests
+by encrypting 200000-character random strings, repeated fifty times for each encryption
+type. The comparison of message encryption speed has been done between a high-
+performance PC, equipped with an Intel i5-11400H processor, and a smartphone powered
+by a MediaTek Helio G99 processor.
+Table 1 quickly gives an overview of the speed difference until six decimals.
+Table 1. Measurements of device speed performing encryptions
+Protocol
+AES (256
+bit)
+RSA (2048
+bit)
+ECC
+OTR
+PC average timePC median timePhone average time Phone median time
+0.001688 seconds0.001993 seconds0.008494 seconds
+0.008473 seconds
+0.001896 seconds
+0.001178 seconds
+0.010470 seconds0.001993 seconds
+0.000997 seconds
+0.006977 seconds0.009484 seconds
+0.002236 seconds
+0.297415 seconds
+0.009965 seconds
+0.002164 seconds
+0.076327 seconds
+On the other hand, E2EE implementation in such wide spectrum of end user applications
+fundamentally changes the trust model. In server-client encryption, there has to be trust
+in the messaging service (like Telegram) to secure the messages on their servers. This
+trust encompasses several aspects:
+17
+Security of Servers: Consumers have to trust Telegram to adequately protect
+their servers from breaches or unauthorized access. A security vulnerability or
+insider threat could potentially expose private messages.
+
+Compliance with Legal Demands: Depending on Telegram's location and
+legal jurisdiction, they might be compelled by law enforcement to access user
+data. Even if Telegram itself is resistant, legal battles can be complex and
+lengthy.
+With E2EE encryption, this trust is significantly reduced. The messages are encrypted
+using keys that are only on your device and the recipient's device. Even if Telegram's
+servers are compromised, the attackers wouldn't find the decryption keys, leaving the
+messages unreadable. This makes E2EE messaging much more resistant to large-scale
+data breaches or government surveillance.
+E2EE encryption protocols are also often open-source. This means the code behind the
+encryption is freely available for anyone to examine. Open-source development
+encourages a community of experts who contribute to improving the overall security of
+the protocol.
+In contrast, Telegram's server-side encryption is not open-source. This lack of
+transparency makes it difficult to assess the security of their implementation. Security
+researchers can't independently verify how Telegram handles data or identify potential
+weaknesses. This can be a concern, as any unknown vulnerabilities in their encryption or
+server security could leave messages exposed. An open system allows the wider security
+community to examine the code, potentially leading to faster identification and patching
+of vulnerabilities.
+While Telegram might claim their server-side encryption is robust, without open-source
+verification, there's always an element of uncertainty. E2E encryption, with its open and
+verifiable nature, offers a stronger foundation for trusting the security of any
+communication.
+4.1.2 The effectiveness of Telegram's encryption in safeguarding user data
+According Telegram’s documentation, this is the message encryption scheme they have
+implemented for their default encryption:
+18Figure 1. The basic layer of Telegram’s encryption (Source: [11])
+Author performed an analysis of each component according to the provided
+documentation [11].
+auth_key: Telegram utilizes a robust 2048-bit key generation process during user
+registration on the client device. This process leverages the secure Diffie-Hellman key
+exchange protocol, ensuring the keys are never transmitted over the network. Each key
+is unique to the user account and facilitates persistent login sessions on authorized
+devices. To safeguard against unauthorized access in case of device loss, individual
+keys can be permanently disabled. As seen on the figure, the auth_key is an important
+part of the message encryption.
+Authorization Key Generation and Secure Communication:
+1. Key Creation: During application installation, an authorization key is generated
+for each user just before registration. This process might involve prompting the
+user to complete a registration form while the key is created in the background.
+Interestingly, the user's keystroke timing can contribute to generating stronger
+random numbers, which are crucial for creating high-quality authorization keys.
+192. Server Salt and Secure Session: Upon key generation, the client retrieves a
+unique "server salt" used to encrypt future communication with the server. The
+client then leverages the newly generated key to establish an encrypted session.
+All subsequent communication, including registration information and phone
+number validation, happens within this secure session unless a new session is
+explicitly created by the user.
+3. Multiple Sessions: Users have the flexibility to create additional sessions at any
+time by simply choosing a new random session identifier.
+auth_key_id: For secure communication, the system identifies the key used to encrypt
+a message by examining the final 64 bits of the authorization key's SHA1 hash (this is
+similar in both MTProto v1 and v2 versions of the protocol). This unique identifier
+ensures messages are decrypted with the correct key. In the unlikely event of a collision
+(where two keys share the same 64-bit hash), a new authorization key is generated to
+prevent decryption errors. In the MadelineProto implementation of the Telegram client
+there is a special case where messages can be sent unencrypted. This is indicated by a
+zero key identifier. This means that auth_key_id = 0 [12]. However, unencrypted
+messages are only allowed for specific message types used during the initial registration
+process, where the Diffie-Hellman key exchange establishes a secure connection. So,
+this can only be a limited amount, but it is still a concerning fact.
+Even though some may consider SHA1 outdated, MTProto 2.0 continues to utilize it for
+this specific purpose. This choice ensures the key identifier remains independent of the
+protocol version, maintaining compatibility across different system updates.
+salt: To enhance security, the server generates a unique, random 64-bit number (salt)
+that changes every 30 minutes for each active session. This salt becomes mandatory for
+all subsequent messages. However, the server will still accept messages containing the
+previous salt for a grace period of 30 minutes (1800 seconds) to allow for a smooth
+transition.
+msg_key:
+
+MTProto v2: Takes the message to be encrypted, including extra information
+like session data and padding, mixes it with a piece of the user's authorization
+20key, and runs it through a strong hashing function. Then, it grabs the middle
+128 bits of that result to create the message key.
+
+MTProto v1: Uses a simpler approach. It only considers the message itself
+(without extra data) and runs it through a different hashing function. It then
+picks the lowest 128 bits of that outcome as the message key. Unlike version
+2.0, it doesn't involve the user's authorization key in this process.
+4.1.3 Generating AES Key and Initialization Vector (IV) for MTProto 2.0
+This describes how MTProto 2.0 calculates the AES key (aes_key) and initialization
+vector (aes_iv) used for encryption. These values are derived from two key inputs:
+1. Authentication Key (auth_key): A shared secret key between the client and
+server.
+2. Message Key (msg_key): A key specific to each message.
+The process depends on the message direction:
+
+Client to Server (x = 0):
+o A larger temporary key (msg_key_large) is generated by applying
+SHA256 to a combination of specific portions of the auth_key, the
+msg_key, and random padding.
+o msg_key is extracted as a subsection of msg_key_large.
+o Two hash values, sha256_a and sha256_b, are generated using
+SHA256 on combinations of msg_key and specific segments of
+auth_key.
+o aes_key and aes_iv are then derived by combining specific byte slices
+from sha256_a and sha256_b.
+
+Server to Client (x = 8):
+21o The process is similar to client-to-server direction, but with a
+different offset (x) used when selecting portions of the auth_key for
+the hash operations.
+In essence, the algorithm utilizes the msg_key and specific parts of the auth_key to
+generate temporary values and then combines them to create the final aes_key and
+aes_iv for secure message encryption.
+AES IGE: Telegram uses AES IGE to encrypt messages. The encryption method is the
+following:
+c_i = f_K(m_i ⊕ c_(i-1)) ⊕ m_(i-1)
+where:
+c_i is the i-th ciphertext block.
+m_i is the i-th plaintext block.
+f_K is the encryption function with key K (AES in this case).
+⊕ denotes the bitwise XOR operation.
+c_(i-1) is the previous ciphertext block (c_0 is initialized to a specific value,
+typically a zero block).
+IGE is a lesser-known block cipher mode and not considered secure for modern
+cryptography due to error propagation issues. While it was implemented in OpenSSL in
+the past, it's not recommended for use. IGE relies on the previous ciphertext block for
+encryption of the current block. If an error occurs during transmission or decryption of a
+block, the error gets incorporated into the next block's encryption. This corrupted block
+then creates errors in the following block's encryption, and so on. This domino effect can
+significantly distort the decrypted message, making it unreliable.
+Secure modes like GCM (Galois/Counter Mode) address this issue. They use techniques
+like message authentication codes to ensure data integrity and prevent errors from
+cascading through the message.
+22Telegram also addresses the usage of IGE, saying “The fact that we do not use IGE as
+MAC together with other properties of our system makes the known attacks on IGE
+irrelevant. [12]” But as the server-side code is not open source, we will not know if this
+is true or not.
+SHA256: Some parts of the message are encrypted via SHA256. However, SHA-256
+might not be secure forever. As computing power continues to advance, there is a
+possibility that it could be broken in the future, perhaps in the next 100 years. There
+have been claims that it has been broken, but these claims have not been substantiated
+by the cryptographic community. In 2018, a company called Treadwell Stanton DuPont
+claimed to have broken SHA-256. However, cryptographers widely dismissed these
+claims as lacking credibility. Brute-forcing SHA-256 is considered infeasible with
+current technology due to the massive computational power required.
+4.1.4 Backups
+One critical aspect under scrutiny is the handling of message backups and the level of
+encryption applied to safeguard these archives.
+WhatsApp, with its end-to-end encrypted backups, offers users a sense of reassurance
+regarding the security of their message history. This feature enables users to store their
+chat data securely, knowing that only they and the intended recipients have access to the
+content, even in the event of device loss or data corruption. Such robust encryption
+methodologies generate confidence among users, especially considering the increasing
+importance placed on data privacy and security in today's digital landscape.
+On the contrary, Telegram's approach to message backups differs significantly. Despite
+its reputation for encryption prowess, Telegram doesn't currently offer end-to-end
+encrypted backups of message history. They don’t even officially advertise, that they have
+backups. But what they have implemented, in functions and behaviour can be classified
+as backup. The name of the function is “Export Data” and “Import Data”. It is possible to
+back up chat logs and perhaps import it back if the user deletes it or copy them to an
+entirely different device. The absence of encrypted backups raises concerns among users
+who prioritize long-term data security and confidentiality. Without this feature, users may
+question the efficacy of Telegram's storage protocols in safeguarding sensitive
+information over extended periods.
+23The disparity between WhatsApp and Telegram in this aspect highlights the slightly
+different considerations involved in evaluating the efficacy of encryption methodologies
+for various storage durations. While WhatsApp excels in providing end-to-end encrypted
+backups for the users to feel their data in peace, Telegram users may find themselves
+seeking alternative strategies to ensure the long-term security of their message history.
+As the landscape of secure messaging continues to evolve, the balance between
+convenience and security remains a key focal point for both platforms and their users as
+well.
+4.1.5 Comparative analysis
+Table 2 quickly describes the previously discussed features of the messaging apps.
+Table 2. Feature comparison
+FeatureTelegramWhatsApp / Signal
+E2EE capable?yesyes
+Default Encryption
+Cloud-based (MTProto) E2EE (Signal protocol)
+Has the default encryption been
+independently analyzed?
+Is it possible to send unencrypted
+messages?
+Any proven dubious encryption
+layers?
+noyes
+yesno
+AES IGEnone
+Is encryption open-source?semiyes
+Who can access messages?Telegram, Law
+enforcement with
+warrantsOnly the sender and the
+recipient
+FocusSpeed, ScalabilityPrivacy
+Other security features2FA, QR, fingerprint2FA, QR, fingerprint
+Backupsplaintext backup (HTML,
+JSON or both)E2EE backup
+Backup options availabilityonly on Desktopplatform-
+independently
+anywhere
+244.2 Network Analysis
+Both of the computers are connected on the same router, they are using different accounts
+on my two different phone numbers. They are also both connected on the same telegram
+server. Computer A will be the one which will send the messages, Computer B will be
+receiving those.
+In the Wireshark application I will have a filter on each computer which will be:
+
+On Computer A: “ip.src == 192.168.1.101 and ip.dst == 149.154.167.92”
+so I always send the message from my interface to the telegram servers
+
+On Computer B: “ip.src = 149.154.167.92” so the message will be sent
+from the telegram servers.
+
+For the simplicity, the message will always be “asd”.
+First let’s see a message being sent via the default encryption method. On Figure 2. and
+Figure 3. below it can be seen, that packet No.1 on both computers is a similar length
+message. This packet is sent to Telegram prior to sending the message, so the packet gets
+sent as soon as a sender writes something but stops. Basically, Telegram already sends
+the message to their servers and encrypts it without the user actually sending the message.
+It is a common method just for the user’s convenience to be able to get back to the same
+message they started if they close the app or want to finish the message later called draft.
+On Figure 2. the packet No.49 is the message that has been sent. On Figure 3. this message
+arrives in packet No.22. After multiple exchanges it can be confirmed that the packets
+don’t look the same neither in length (usually the sent packet is 16 bytes shorter than the
+received one), nor in payload content. The reason could be that it is a server-client
+encryption, which means that the message on transit is encrypted but not with the finished
+encryption. This way the message at least is not sent unencrypted, so eavesdropping
+hardly has any meaning. On the other hand, the encryption looking completely different
+could mean, that the server could have potentially used its ability to make the message
+unencrypted first on their side and then re-encrypt it for sending to the destination device.
+This raises confidentiality questions in the era of privacy.
+25Figure 2. The packets sent from computer A under default encryption method. (Source: Author
+created)
+Figure 3. The packets sent to Computer B under default encryption method (Source: Author
+created)
+Figure 4. The packet containing the message on Computer A (Source: Author created)
+Figure 5. The packet containing the message on Computer B (Source: Author created)
+26Next, I examined a packet sent in Secret Chat mode from Computer A and Computer B.
+The expectation here is to send and receive two packets similar to each other in the
+payload.
+Upon doing the test I still received packets with different payload from each other. The
+16 bytes discrepancy could be noticed in this case between the two packet lengths and
+again, each time the payload was completely different. Upon checking on the
+documentation, based on the information there it is not possible that the server is
+tampering with the packets. In reality this is what happens.
+It is also worth pointing out that when this part of the test started, I had to change the filter
+on Computer A to this: “ip.src == 192.168.1.101 and ip.dst == 149.154.167.92”. I didn’t
+have to modify the filter on Computer B to receive the packets.
+Figure 6. The packets sent from Computer A under E2EE method (Source: Author created)
+Figure 7. The packets received on Computer B under E2EE method (Source: Author created)
+27Figure 8. The packet containing the message from Computer A (Source: Author created)
+Figure 9. The packet containing the message from Computer B (Source: Author created)
+285 Results
+This chapter discusses the result of this research.
+5.1 Anticipated Findings
+After an analysis of the functions and the encryption itself and conducting a network
+analysis, it is safe to say that Telegram doesn’t work as it is advertised. The functions that
+do work as intended are out of date compared to the modern technologies. Due to not
+being able to analyse the server-side code there are some things which could not be
+certainly proved. But from the resources I gathered here it is safe to say that using the
+Telegram application from a security standpoint is dubious and should be avoided until
+changes or next updates. Telegram does not implement effectively the encryption
+algorithms it claims to use. Also, there are more, undocumented functions that make the
+privacy and security of the application less trustworthy. The encryptions algorithms do
+not provide the similar security as other the industry standards. In the implementation I
+have not found vulnerabilities or weaknesses. But from the user’s point of view it is
+questionable how the application is (not) striving for protecting the individual’s privacy.
+5.2 Implications
+Telegram's encryption protocols have been a subject of scrutiny and debate within the
+cybersecurity community. While the messaging platform offers end-to-end encryption
+(E2EE) for its Secret Chats feature, concerns are valid regarding the transparency and
+reliability of its encryption mechanisms, particularly in its cloud-based chats.
+The main point of Telegram's security model lies in its MTProto encryption protocol,
+which powers its E2EE functionality. This protocol has faced its share of questions,
+primarily due to its proprietary nature, which limits independent scrutiny and verification.
+While Telegram asserts that its encryption is robust and secure, without open,
+independent audits, it's challenging for users to validate these claims fully.
+Moreover, the cloud-based chats, which constitute the bulk of Telegram's
+communications, operate under a different encryption method. Unlike the E2EE Secret
+Chats, the specifics of encryption in cloud-based chats remain non-transparent to users.
+29This lack of transparency raises concerns about the integrity and confidentiality of
+messages exchanged through this widely used mode of communication.
+One of the significant criticisms raised against Telegram's encryption implementation is
+its reliance on outdated protocols and potentially unsupported cipher methods for AES.
+While these protocols may have been sufficient for ensuring speed and efficiency in the
+past, the rapid evolution of technology demands more robust encryption standards to
+safeguard user privacy effectively.
+As modern computing devices become increasingly powerful, the vulnerabilities inherent
+in Telegram's aging encryption protocols are brought to the front. The risk of exploitation
+and compromise appears larger as adversaries leverage advanced techniques to breach
+security barriers.
+The recommendation from me is to implement Signal Protocol, an open-source
+messaging protocol. Why is this protocol more secure and trustworthy?
+
+End-to-End Encryption by default: Signal protocol ensures that messages are
+encrypted before leaving the sender's device and remain encrypted until they reach
+the intended recipient's device. This means that even if the messages are
+intercepted during transmission or stored on servers, they remain unreadable to
+anyone except the sender and recipient.
+
+Forward Secrecy: Forward secrecy is a critical feature of the Signal protocol. It
+means that even if an attacker gains access to the encryption keys in the future,
+they cannot decrypt past messages. Each message is encrypted with a unique
+session key, adding an extra layer of security to communications.
+
+Authentication: Signal protocol incorporates strong cryptographic mechanisms
+for authenticating users, ensuring that they can verify the identity of the person
+they are communicating with. This helps prevent man-in-the-middle attacks,
+where a malicious third party intercepts and alters communications.
+
+Open Source: The Signal protocol is open source, which means its codebase is
+publicly available for review and scrutiny by security experts. This transparency
+30enhances trust and confidence in the security of the protocol, as any vulnerabilities
+can be identified and addressed by the community.
+
+Cross-Platform Compatibility: Signal protocol is designed to work smoothly
+across different platforms, including mobile devices, desktops, and web browsers.
+This ensures that users can communicate securely regardless of the devices they
+are using, enhancing convenience and accessibility.
+
+Privacy Protection: By implementing the Signal protocol, Telegram would
+demonstrate a strong commitment to protecting user privacy. The protocol ensures
+that users' communications are shielded from unauthorized access or surveillance
+by third parties, including governments and hackers or Telegram servers
+themselves.
+Overall, integrating the Signal protocol into the Telegram messaging application would
+provide a comprehensive solution already for securing communications, building user
+trust, and fostering a privacy-conscious environment for your users. It not only enhances
+the security of the application but also aligns with the increasing demand for privacy-
+focused solutions in today's digital landscape.
+There is an even more futuristic solution, which would theoretically be more highly
+secure which is a post-quantum messaging algorithm. The first messenger to use such
+algprithm, is IMessage, in particular the PQ3 protocol [15]. PQ3 is a PQC protocol,
+designed to specifically counter the threat posed by quantum computers. These theoretical
+machines have the potential to crack the encryption behind many of the protocols we rely
+on today. While quantum computers are still in their early stages of development, experts
+believe it's a matter of time before they become a reality. PQ3's design takes this
+possibility into account, offering a level of security that MTProto simply cannot match.
+MTProto, on the other hand, utilizes traditional encryption algorithms that are vulnerable
+to being broken by quantum computers. PQ3 is still under development, and its
+performance characteristics are being optimized. While remaining secure, it strives to be
+as efficient as possible. MTProto is known for being a relatively fast and lightweight
+protocol. However, when security is paramount, some performance trade-offs might be
+necessary. PQ3's development is ongoing, and future iterations may achieve performance
+levels comparable to MTProto while offering superior security.
+316 Conclusion
+The research findings have provided a comprehensive overview of encryption
+implementation in Telegram compared to other industry standards instant messaging
+applications. This includes an analysis of various encryption protocols, their strengths,
+weaknesses, and the implications for user privacy and security. A network analysis was
+also conducted to see if Telegram behaves how it is advertised.
+In conclusion, while Telegram offers certain conveniences, the landscape of secure and
+private messaging has expanded to include alternatives like Signal and PQ3 applications.
+These platforms prioritize user privacy and security through end-to-end encryption and
+other advanced measures, providing users with greater confidence in their
+communication's confidentiality. With increasing concerns about data privacy, these
+alternatives stand out for their commitment to protecting user information, offering a
+fitting choice for those seeking a more secure messaging experience.
+6.1 Significance of the Study
+This study contributes significantly to the understanding of encryption practices within
+messaging platforms. By highlighting the nuances of encryption implementation, it sheds
+light on the complexities involved in securing user data and communications. The
+implications of this research extend to user privacy and data security within messaging
+apps. Understanding the strengths and limitations of encryption protocols can empower
+users to make informed decisions about their choice of messaging platforms and the level
+of security they require for their communications. This can only be done if the developer
+team is fully transparent in their communication.
+327 Future Work
+Moving forward, there is a need for further research in the field of messaging app
+encryption. This could involve exploring emerging encryption technologies and also ones
+that are considered staple in the industry. As of in Telegram itself, in the future I would
+like to work on an attack, which uses any of the brought-up points in my findings in this
+research. The other, more futuristic goal would be to find a solution to bruteforce these
+symmetric encryption algorithms used in this protocol.
+33References
+[1]
+Z. Hacker, „Telegram's Rise to Popularity: A Look at the App's Past, Present, and
+Future,” 03 április 2023. [Online]. Available:
+https://blog.invitemember.com/telegrams-rise-to-popularity-a-look-at-the-apps-
+past-present-and-future/. [Hozzáférés dátuma: 25 február 2024].
+[2] L. Crisan, „Launching Default End-to-End Encryption on Messenger,” Meta, 6
+december 2023. [Online]. Available: https://about.fb.com/news/2023/12/default-
+end-to-end-encryption-on-messenger/. [Hozzáférés dátuma: 25 február 2024].
+[3] „Federal Information Processing Standards Publication 197 Announcing the
+ADVANCED ENCRYPTION STANDARD (AES),” 26 november 2001.
+[Online]. Available: https://csrc.nist.gov/files/pubs/fips/197/final/docs/fips-
+197.pdf. [Hozzáférés dátuma: 9 március 2024].
+[4] R. L. Rivest, A. Shamir és L. M. Adleman, „A Method for Obtaining Digital,”
+február 1978. [Online]. Available:
+https://web.archive.org/web/20230127011251/http://people.csail.mit.edu/rivest/R
+sapaper.pdf. [Hozzáférés dátuma: 9 március 2024].
+[5] NSA/CSS, „The Case for Elliptic Curve Cryptography,” 15 január 2009.
+[Online]. Available:
+https://web.archive.org/web/20090117023500/http://www.nsa.gov/business/progr
+ams/elliptic_curve.shtml. [Hozzáférés dátuma: 9 március 2024].
+[6] A. Johns, „Insightful RSA vs ECC Algorithm Performance Comparison,”
+Centauri, [Online]. Available: https://www.certauri.com/rsa-vs-ecc-algorithm-
+performance-comparison-insights/. [Hozzáférés dátuma: 11 május 2024].
+[7] „Messenger Secret Conversations (Technical Whitepaper),” Facebook, 8 július
+2016. [Online]. Available:
+https://web.archive.org/web/20161106141602/https://fbnewsroomus.files.wordpr
+ess.com/2016/07/secret_conversations_whitepaper-1.pdf. [Hozzáférés dátuma:
+09 március 2024].
+[8] „End-to-End Encryption, Secret Chats,” Telegram, [Online]. Available:
+https://core.telegram.org/api/end-to-end#upgrading-to-mtproto-2-0-from-
+mtproto-1-0. [Hozzáférés dátuma: 9 március 2024].
+[9] A. Titterington, „Is Telegram a secure messenger? | Kaspersky official blog,”
+Kaspersky, 19 január 2023. [Online]. Available:
+https://www.kaspersky.com/blog/telegram-why-nobody-uses-secret-
+chats/46889/. [Hozzáférés dátuma: 9 március 2024].
+[10] I. Sukhodolskiy and S. Zapechnikov, "Analysis of Secure Protocols and
+Authentication Methods for Messaging," in Procedia Computer Science, vol.
+169, 2020, pp. 407-411.
+34[11] „Telegram security vulnerabilities, CVEs,” [Online]. Available:
+https://www.cvedetails.com/vulnerability-list/vendor_id-16210/Telegram.html.
+[Hozzáférés dátuma: 09 március 2024].
+[12] „Mobile Protocol: Detailed Description,” Telegram, [Online]. Available:
+https://core.telegram.org/mtproto/description. [Hozzáférés dátuma: 24 március
+2024].
+[13] D. Gentili, „MadelineProto, a PHP MTProto telegram client,” 20 április 2021.
+[Online]. Available:
+https://github.com/danog/MadelineProto/blob/1389b24751fa3f06ba783888c4eee
+7b1c42dea84/src/danog/MadelineProto/Loop/Connection/WriteLoop.php#L91.
+[Hozzáférés dátuma: 24 március 2024].
+[14] „FAQ for the Technically Inclined,” Telegram, [Online]. Available:
+https://core.telegram.org/techfaq#q-do-you-use-ige-ige-is-broken. [Hozzáférés
+dátuma: 24 március 2024].
+[15] D. Basin, F. Linker és R. Sasse, „A Formal Analysis of the iMessage PQ3,”
+Apple, 21 február 2024. [Online]. Available:
+https://security.apple.com/assets/files/A_Formal_Analysis_of_the_iMessage_PQ
+3_Messaging_Protocol_Basin_et_al.pdf. [Hozzáférés dátuma: 11 május 2024].
+35Appendix 1 – Non-exclusive licence for reproduction and
+publication of a graduation thesis1
+I Farkas Pongrácz
+1. Grant Tallinn University of Technology free licence (non-exclusive licence) for my
+thesis “Evaluating Telegram's Encryption Algorithm Implementation”, supervised by
+Fuad Budagov.
+1.1. to be reproduced for the purposes of preservation and electronic publication of
+the graduation thesis, incl. to be entered in the digital collection of the library of
+Tallinn University of Technology until expiry of the term of copyright;
+1.2. to be published via the web of Tallinn University of Technology, incl. to be
+entered in the digital collection of the library of Tallinn University of Technology
+until expiry of the term of copyright.
+2. I am aware that the author also retains the rights specified in clause 1 of the non-
+exclusive licence.
+3. I confirm that granting the non-exclusive licence does not infringe other persons'
+intellectual property rights, the rights arising from the Personal Data Protection Act
+or rights arising from other legislation.
+12.05.2024
+1 The non-exclusive licence is not valid during the validity of access restriction indicated in the student's application for restriction on access to the graduation
+thesis that has been signed by the school's dean, except in case of the university's right to reproduce the thesis for preservation purposes only. If a graduation thesis
+is based on the joint creative activity of two or more persons and the co-author(s) has/have not granted, by the set deadline, the student defending his/her
+graduation thesis consent to reproduce and publish the graduation thesis in compliance with clauses 1.1 and 1.2 of the non-exclusive licence, the non-exclusive
+license shall not be valid for the period.
+36
+﻿Creating an Authorization Key
+The query format is described using Binary Data Serialization and the TL Language. All large numbers are transmitted as strings containing the required sequence of bytes in big endian order. Hash functions, such as SHA1, return strings (of 20 bytes) which can also be interpreted as big endian numbers. Small numbers (int, long, int128, int256) are normally little endian; however, if they are part of SHA1, the bytes are not rearranged. This way, if long x is the 64 lower-order bits of SHA1 of string s, then the final 8 bytes of 20-byte string SHA1(s) are taken and interpreted as a 64-bit integer.
+
+Prior to sending off unencrypted messages (required in this instance to generate an authorization key), the client must undergo (p,q) authorization as follows.
+
+DH exchange initiation
+1) Client sends query to server
+req_pq_multi#be7e8ef1 nonce:int128 = ResPQ;
+The value of nonce is selected randomly by the client (random number) and identifies the client within this communication. Following this step, it is known to all.
+
+2) Server sends response of the form
+resPQ#05162463 nonce:int128 server_nonce:int128 pq:string server_public_key_fingerprints:Vector long = ResPQ;
+Here, string pq is a representation of a natural number (in binary big endian format). This number is the product of two different odd prime numbers. Normally, pq is less than or equal to 2^63-1. The value of server_nonce is selected randomly by the server; following this step, it is known to all.
+
+server_public_key_fingerprints is a list of public RSA key fingerprints (64 lower-order bits of SHA1 (server_public_key); the public key is represented as a bare type rsa_public_key n:string e:string = RSAPublicKey, where, as usual, n and e are numbers in big endian format serialized as strings of bytes, following which SHA1 is computed) received by the server.
+
+All subsequent messages contain the pair (nonce, server_nonce) both in the plain-text, and the encrypted portions which makes it possible to identify a “temporary session” — one run of the key generation protocol described on this page that uses the same (nonce, server_nonce) pair. An intruder could not create a parallel session with the server with the same parameters and reuse parts of server- or client-encrypted messages for its own purposes in such a parallel session, because a different server_nonce would be selected by the server for any new “temporary session”.
+
+Proof of work
+3) Client decomposes pq into prime factors such that p < q.
+This starts a round of Diffie-Hellman key exchanges.
+
+Presenting proof of work; Server authentication
+4) encrypted_data payload generation
+First of all, generate an encrypted_data payload as follows:
+
+new_nonce := another (good) random number generated by the client; after this query, it is known to both client and server;
+
+data := a serialization of
+
+p_q_inner_data_dc#a9f55f95 pq:string p:string q:string nonce:int128 server_nonce:int128 new_nonce:int256 dc:int = P_Q_inner_data;
+or of
+
+p_q_inner_data_temp_dc#56fddf88 pq:string p:string q:string nonce:int128 server_nonce:int128 new_nonce:int256 dc:int expires_in:int = P_Q_inner_data;
+where dc is the ID of the DC we're talking to; 10000 has to be added to the DC ID when connecting to the test servers; it has to be made negative if the DC we're connecting to is a media (not CDN) DC.
+
+encrypted_data := RSA_PAD (data, server_public_key), where RSA_PAD is a version of RSA with a variant of OAEP+ padding explained below in 4.1).
+
+Someone might intercept the query and replace it with their own, independently decomposing pq into factors instead of the client. The only field that it makes sense to modify is new_nonce which would be the one an intruder would have to re-generate (because an intruder cannot decrypt the encrypted data sent by the client). Since all subsequent messages are encrypted using new_nonce or contain new_nonce_hash, they will not be processed by the client (an intruder would not be able to make it look as though they had been generated by the server because they would not contain new_nonce). Therefore, this intercept will only result in the intruder's completing the authorization key generation protocol in place of the client and creating a new key (that has nothing to do with the client); however, the same effect could be achieved simply by creating a new key in one's own name.
+
+An alternative form of inner data (p_q_inner_data_temp_dc) is used to create temporary keys, that are only stored in the server RAM and are discarded after at most expires_in seconds. The server is free to discard its copy earlier. In all other respects the temporary key generation protocol is the same. After a temporary key is created, the client usually binds it to its principal authorisation key by means of the auth.bindTempAuthKey method, and uses it for all client-server communication until it expires; then a new temporary key is generated. Thus Perfect Forward Secrecy (PFS) in client-server communication is achieved. Read more about PFS »
+
+4.1) RSA_PAD(data, server_public_key) mentioned above is implemented as follows:
+data_with_padding := data + random_padding_bytes; -- where random_padding_bytes are chosen so that the resulting length of data_with_padding is precisely 192 bytes, and data is the TL-serialized data to be encrypted as before. One has to check that data is not longer than 144 bytes.
+data_pad_reversed := BYTE_REVERSE(data_with_padding); -- is obtained from data_with_padding by reversing the byte order.
+a random 32-byte temp_key is generated.
+data_with_hash := data_pad_reversed + SHA256(temp_key + data_with_padding); -- after this assignment, data_with_hash is exactly 224 bytes long.
+aes_encrypted := AES256_IGE(data_with_hash, temp_key, 0); -- AES256-IGE encryption with zero IV.
+temp_key_xor := temp_key XOR SHA256(aes_encrypted); -- adjusted key, 32 bytes
+key_aes_encrypted := temp_key_xor + aes_encrypted; -- exactly 256 bytes (2048 bits) long
+The value of key_aes_encrypted is compared with the RSA-modulus of server_pubkey as a big-endian 2048-bit (256-byte) unsigned integer. If key_aes_encrypted turns out to be greater than or equal to the RSA modulus, the previous steps starting from the generation of new random temp_key are repeated. Otherwise the final step is performed:
+encrypted_data := RSA(key_aes_encrypted, server_pubkey); -- 256-byte big-endian integer is elevated to the requisite power from the RSA public key modulo the RSA modulus, and the result is stored as a big-endian integer consisting of exactly 256 bytes (with leading zero bytes if required).
+5) Send req_DH_params query with generated encrypted_data
+req_DH_params#d712e4be nonce:int128 server_nonce:int128 p:string q:string public_key_fingerprint:long encrypted_data:string = Server_DH_Params
+6) Server responds with:
+server_DH_params_ok#d0e8075c nonce:int128 server_nonce:int128 encrypted_answer:string = Server_DH_Params;
+If the query is incorrect, the server returns a -404 error and the handshake must be restarted (any subsequent request also returns -404, even if it is correct).
+A -444 error may also be returned if a test DC ID is passed in p_q_inner_data_(_temp)dc when handshaking with a production DC, and vice versa.
+
+Here, encrypted_answer is obtained as follows:
+
+new_nonce_hash := 128 lower-order bits of SHA1 (new_nonce);
+answer := serialization
+server_DH_inner_data#b5890dba nonce:int128 server_nonce:int128 g:int dh_prime:string g_a:string server_time:int = Server_DH_inner_data;
+answer_with_hash := SHA1(answer) + answer + (0-15 random bytes); such that the length be divisible by 16;
+tmp_aes_key := SHA1(new_nonce + server_nonce) + substr (SHA1(server_nonce + new_nonce), 0, 12);
+tmp_aes_iv := substr (SHA1(server_nonce + new_nonce), 12, 8) + SHA1(new_nonce + new_nonce) + substr (new_nonce, 0, 4);
+encrypted_answer := AES256_ige_encrypt (answer_with_hash, tmp_aes_key, tmp_aes_iv); here, tmp_aes_key is a 256-bit key, and tmp_aes_iv is a 256-bit initialization vector. The same as in all the other instances that use AES encryption, the encrypted data is padded with random bytes to a length divisible by 16 immediately prior to encryption.
+Following this step, new_nonce is still known to client and server only. The client is certain that it is the server that responded and that the response was generated specifically in response to client query req_DH_params, since the response data are encrypted using new_nonce.
+
+Client is expected to check whether p = dh_prime is a safe 2048-bit prime (meaning that both p and (p-1)/2 are prime, and that 2^2047 < p < 2^2048), and that g generates a cyclic subgroup of prime order (p-1)/2, i.e. is a quadratic residue mod p. Since g is always equal to 2, 3, 4, 5, 6 or 7, this is easily done using quadratic reciprocity law, yielding a simple condition on p mod 4g -- namely, p mod 8 = 7 for g = 2; p mod 3 = 2 for g = 3; no extra condition for g = 4; p mod 5 = 1 or 4 for g = 5; p mod 24 = 19 or 23 for g = 6; and p mod 7 = 3, 5 or 6 for g = 7. After g and p have been checked by the client, it makes sense to cache the result, so as not to repeat lengthy computations in future.
+
+If the verification takes too long time (which is the case for older mobile devices), one might initially run only 15 Miller--Rabin iterations for verifying primeness of p and (p - 1)/2 with error probability not exceeding one billionth, and do more iterations later in the background.
+
+Another optimization is to embed into the client application code a small table with some known "good" couples (g,p) (or just known safe primes p, since the condition on g is easily verified during execution), checked during code generation phase, so as to avoid doing such verification during runtime altogether. Server changes these values rarely, thus one usually has to put the current value of server's dh_prime into such a table. For example, current value of dh_prime equals (in big-endian byte order)
+
+C7 1C AE B9 C6 B1 C9 04 8E 6C 52 2F 70 F1 3F 73 98 0D 40 23 8E 3E 21 C1 49 34 D0 37 56 3D 93 0F 48 19 8A 0A A7 C1 40 58 22 94 93 D2 25 30 F4 DB FA 33 6F 6E 0A C9 25 13 95 43 AE D4 4C CE 7C 37 20 FD 51 F6 94 58 70 5A C6 8C D4 FE 6B 6B 13 AB DC 97 46 51 29 69 32 84 54 F1 8F AF 8C 59 5F 64 24 77 FE 96 BB 2A 94 1D 5B CD 1D 4A C8 CC 49 88 07 08 FA 9B 37 8E 3C 4F 3A 90 60 BE E6 7C F9 A4 A4 A6 95 81 10 51 90 7E 16 27 53 B5 6B 0F 6B 41 0D BA 74 D8 A8 4B 2A 14 B3 14 4E 0E F1 28 47 54 FD 17 ED 95 0D 59 65 B4 B9 DD 46 58 2D B1 17 8D 16 9C 6B C4 65 B0 D6 FF 9C A3 92 8F EF 5B 9A E4 E4 18 FC 15 E8 3E BE A0 F8 7F A9 FF 5E ED 70 05 0D ED 28 49 F4 7B F9 59 D9 56 85 0C E9 29 85 1F 0D 81 15 F6 35 B1 05 EE 2E 4E 15 D0 4B 24 54 BF 6F 4F AD F0 34 B1 04 03 11 9C D8 E3 B9 2F CC 5B
+7) Client computes random 2048-bit number b (using a sufficient amount of entropy) and sends the server a message
+set_client_DH_params#f5045f1f nonce:int128 server_nonce:int128 encrypted_data:string = Set_client_DH_params_answer;
+Here, encrypted_data is obtained thus:
+
+g_b := pow(g, b) mod dh_prime;
+data := serialization
+client_DH_inner_data#6643b654 nonce:int128 server_nonce:int128 retry_id:long g_b:string = Client_DH_Inner_Data
+data_with_hash := SHA1(data) + data + (0-15 random bytes); such that length be divisible by 16;
+encrypted_data := AES256_ige_encrypt (data_with_hash, tmp_aes_key, tmp_aes_iv);
+The retry_id field is equal to zero at the time of the first attempt; otherwise, it is equal to auth_key_aux_hash from the previous failed attempt (see Item 9).
+
+8) Thereafter, auth_key equals pow(g, {ab}) mod dh_prime; on the server, it is computed as pow(g_b, a) mod dh_prime, and on the client as (g_a)^b mod dh_prime.
+Auth_key_hash is computed := 64 lower-order bits of SHA1 (auth_key). The server checks whether there already is another key with the same auth_key_hash and responds in one of the following ways.
+
+DH key exchange complete
+9) Server responds in one of three ways:
+dh_gen_ok#3bcbf734 nonce:int128 server_nonce:int128 new_nonce_hash1:int128 = Set_client_DH_params_answer;
+dh_gen_retry#46dc1fb9 nonce:int128 server_nonce:int128 new_nonce_hash2:int128 = Set_client_DH_params_answer;
+dh_gen_fail#a69dae02 nonce:int128 server_nonce:int128 new_nonce_hash3:int128 = Set_client_DH_params_answer;
+new_nonce_hash1, new_nonce_hash2, and new_nonce_hash3 are obtained as the 128 lower-order bits of SHA1 of the byte string derived from the new_nonce string by adding a single byte with the value of 1, 2, or 3, and followed by another 8 bytes with auth_key_aux_hash. Different values are required to prevent an intruder from changing server response dh_gen_ok into dh_gen_retry.
+auth_key_aux_hash is the 64 higher-order bits of SHA1(auth_key). It must not be confused with auth_key_hash.
+In the other case, the client goes to Item 7) generating a new b. In the first case, the client and the server have negotiated auth_key, following which they forget all other temporary data, and the client creates another encrypted session using auth_key. At the same time, server_salt is initially set to substr(new_nonce, 0, 8) XOR substr(server_nonce, 0, 8). If required, the client stores the difference between server_time received in 5) and its local time, to be able always to have a good approximation of server time which is required to generate correct message identifiers.
+
+IMPORTANT: Apart from the conditions on the Diffie-Hellman prime dh_prime and generator g, both sides are to check that g, g_a and g_b are greater than 1 and less than dh_prime - 1. We recommend checking that g_a and g_b are between 2^{2048-64} and dh_prime - 2^{2048-64} as well.
+
+Error Handling (Lost Queries and Responses)
+If the client fails to receive any response to its query from the server within a certain time interval, it may simply re-send the query. If the server has already sent a response to this query (exactly the same request and not just similar: all the parameters during the repeat request must take on the same values) but it did not get to the client, the server will simply re-send the same response. The server remembers the response for up to 10 minutes after having received the query in 1). If the server has already forgotten the response or the requisite temporary data, the client will have to start from the beginning.
+
+The server may consider that if the client has already sent in the next query using the data from the previous server response to the specific client, the response is known to have been received by the client and may be forgotten by the server.
+
+Auth key generation example
+In the examples below, the transport headers are omitted:
+
+For example, for the abridged version of the transport », the client sends 0xef as the first byte (important: only prior to the very first data packet), then the packet length is encoded with a single byte (0x01-0x7e = data length divided by 4; or 0x7f followed by 3 bytes (little endian) divided by 4) followed by the data itself. In this case, server responses have the same structure (although the server does not send 0xefas the first byte).
+
+Detailed documentation on creating authorization keys is available here ».
+
+DH exchange initiation
+1) Client sends query to server
+Sent payload (excluding transport headers/trailers):
+
+0000 | 00 00 00 00 00 00 00 00 60 97 05 00 EB E5 77 67
+0010 | 14 00 00 00 F1 8E 7E BE 79 F0 AF B5 02 52 E5 FC
+0020 | 96 92 4B FC EC DA 4F 05
+Payload (de)serialization:
+
+req_pq_multi#be7e8ef1 nonce:int128 = ResPQ;
+Parameter	Offset, Length in bytes	Value	Description
+auth_key_id	0, 8	0000000000000000	0 since the message is in plain text
+message_id	8, 8	60970500EBE57767	Message ID generated as specified here » (unixtime() << 32) + (N*4)
+message_length	16, 4	14000000 (20 in decimal)	Message body length
+%(req_pq_multi)	20, 4	f18e7ebe	req_pq_multi constructor number from TL schema
+nonce	24, 16	79F0AFB50252E5FC96924BFCECDA4F05	Random number
+2) Server sends response of the form
+Received payload (excluding transport headers/trailers):
+
+0000 | 00 00 00 00 00 00 00 00 01 28 FB D2 EB E5 77 67
+0010 | 50 00 00 00 63 24 16 05 79 F0 AF B5 02 52 E5 FC
+0020 | 96 92 4B FC EC DA 4F 05 80 17 75 A3 EF BF D2 70
+0030 | 1A A2 8A D7 27 BE 46 46 08 13 0B 74 75 66 9F EB
+0040 | 8B 00 00 00 15 C4 B5 1C 03 00 00 00 85 FD 64 DE
+0050 | 85 1D 9D D0 A5 B7 F7 09 35 5F C3 0B 21 6B E8 6C
+0060 | 02 2B B4 C3
+Payload (de)serialization:
+
+resPQ#05162463 nonce:int128 server_nonce:int128 pq:string server_public_key_fingerprints:Vector<strlong> = ResPQ;
+Parameter	Offset, Length in bytes	Value	Description
+auth_key_id	0, 8	0000000000000000	0 since the message is in plain text
+message_id	8, 8	0128FBD2EBE57767	Message ID generated as specified here » (unixtime() << 32) + (N*4)
+message_length	16, 4	50000000 (80 in decimal)	Message body length
+%(resPQ)	20, 4	63241605	resPQ constructor number from TL schema
+nonce	24, 16	79F0AFB50252E5FC96924BFCECDA4F05	Value generated by client in Step 1
+server_nonce	40, 16	801775A3EFBFD2701AA28AD727BE4646	Server-generated random number
+pq	56, 12	08130B7475669FEB8B000000
+TL byte deserialization
+=> bigendian conversion to decimal
+=> 1372318559046200203	Single-byte prefix denoting length, an 8-byte string, and three bytes of padding
+%(Vector strlong)	68, 4	15c4b51c	Vector t constructor number from TL schema
+count	72, 4	03000000	Number of elements in server_public_key_fingerprints
+server_public_key_fingerprints[0]	76, 8	85FD64DE851D9DD0	64 lower-order bits of SHA1(server_public_key)
+server_public_key_fingerprints[1]	84, 8	A5B7F709355FC30B	64 lower-order bits of SHA1(server_public_key)
+server_public_key_fingerprints[2]	92, 8	216BE86C022BB4C3	64 lower-order bits of SHA1(server_public_key)
+In our case, the client only has the following public keys, with the following fingerprints:
+
+85FD64DE851D9DD0
+Let's choose the only matching key, the one with fingerprint equal to 85FD64DE851D9DD0.
+
+Proof of work
+3) Client decomposes pq into prime factors such that p < q.
+pq = 1372318559046200203
+Decompose into 2 prime cofactors p < q: 1372318559046200203 = 1141464581 * 1202243663
+
+p = 1141464581
+q = 1202243663
+Presenting proof of work; Server authentication
+4) encrypted_data payload generation
+First of all, generate an encrypted_data payload as follows:
+
+Generated payload (excluding transport headers/trailers):
+
+0000 | 95 5F F5 A9 08 13 0B 74 75 66 9F EB 8B 00 00 00
+0010 | 04 44 09 5E 05 00 00 00 04 47 A8 C8 4F 00 00 00
+0020 | 79 F0 AF B5 02 52 E5 FC 96 92 4B FC EC DA 4F 05
+0030 | 80 17 75 A3 EF BF D2 70 1A A2 8A D7 27 BE 46 46
+0040 | 26 4F 83 5B 0B 7B DF F9 C6 ED 6C F8 19 FD 6D F5
+0050 | DC D1 7E 90 D6 7A DD 2C 2C 1E 37 75 C7 A6 A0 AC
+0060 | 02 00 00 00
+Payload (de)serialization:
+
+p_q_inner_data_dc#a9f55f95 pq:string p:string q:string nonce:int128 server_nonce:int128 new_nonce:int256 dc:int = P_Q_inner_data;
+Parameter	Offset, Length in bytes	Value	Description
+%(p_q_inner_data_dc)	0, 4	955ff5a9	p_q_inner_data_dc constructor number from TL schema
+pq	4, 12	08130B7475669FEB8B000000
+TL byte deserialization
+=> bigendian conversion to decimal
+=> 1372318559046200203	Single-byte prefix denoting length, 8-byte string, and three bytes of padding
+p	16, 8	0444095E05000000
+TL byte deserialization
+=> bigendian conversion to decimal
+=> 1141464581	First prime cofactor: single-byte prefix denoting length, 4-byte string, and three bytes of padding
+q	24, 8	0447A8C84F000000
+TL byte deserialization
+=> bigendian conversion to decimal
+=> 1202243663	Second prime cofactor: single-byte prefix denoting length, 4-byte string, and three bytes of padding
+nonce	32, 16	79F0AFB50252E5FC96924BFCECDA4F05	Value generated by client in Step 1
+server_nonce	48, 16	801775A3EFBFD2701AA28AD727BE4646	Value received from server in Step 2
+new_nonce	64, 32	264F835B0B7BDFF9C6ED6CF819FD6DF5 DCD17E90D67ADD2C2C1E3775C7A6A0AC	Client-generated random number
+dc	96, 4	02000000 (2 in decimal)	DC ID: 10000 (decimal) has to be added to the DC ID to connect to the test servers; it has to be made negative if the DC we're connecting to is a media (not CDN) DC.
+The serialization of P_Q_inner_data produces data, which is used to generate encrypted_data as specified in step 4.1.
+These are the inputs to the algorithm specified in step 4.1:
+
+data = 955FF5A908130B7475669FEB8B0000000444095E050000000447A8C84F00000079F0AFB50252E5FC96924BFCECDA4F05801775A3EFBFD2701AA28AD727BE4646264F835B0B7BDFF9C6ED6CF819FD6DF5DCD17E90D67ADD2C2C1E3775C7A6A0AC02000000
+random_padding_bytes = C1C3E221C1EAECF4788AC3FEA0DECFEFD0E81AE6C6A1AB2AB8729D0634E08A3A12A9D53E06134F87B74BBD9EC90793B091C7FBF4CDBCBE4536397902388D4F68EBAA138CCD068244DB026332B7FC17E5DFAC09E7A71FA5353E3EEBDC
+And this is the output:
+
+encrypted_data = 35D750FBDF8B804F609512959103977D8F3B90189B7B2DE9C14F53FF8B5910AB2371A1B8D855B5787B94BC67068CAE657367C68170C0DE7E3DBEA38980F15A4BE1C0A6F3B2C0FF279D68496585D2F58924EE2CCCB55746FABAAE2DC0CCBB9E168B79ABC0BC7E68BEE0130708E680938F7A2BFA633285DA63784C8EBEF6156755504F68006E66CDF346B13B8512ABE830706DD9265329EFDE99DFB0F72AA11119140C941537353423295C519F04A25CACEE3293E8CF2C799515175E96DD36F913BB4B1A19D92EAE3BC8883A333523AC18D4A5165A32FD67990497F1208EF643CA0093D01DCF2E537DCBCC22581630291B7217600B8725E657383D156905B2BF16
+The length of the final string is 256 bytes.
+
+5) Send req_DH_params query with generated encrypted_data
+Sent payload (excluding transport headers/trailers):
+
+0000 | 00 00 00 00 00 00 00 00 68 E5 08 00 EB E5 77 67
+0010 | 40 01 00 00 BE E4 12 D7 79 F0 AF B5 02 52 E5 FC
+0020 | 96 92 4B FC EC DA 4F 05 80 17 75 A3 EF BF D2 70
+0030 | 1A A2 8A D7 27 BE 46 46 04 44 09 5E 05 00 00 00
+0040 | 04 47 A8 C8 4F 00 00 00 85 FD 64 DE 85 1D 9D D0
+0050 | FE 00 01 00 35 D7 50 FB DF 8B 80 4F 60 95 12 95
+0060 | 91 03 97 7D 8F 3B 90 18 9B 7B 2D E9 C1 4F 53 FF
+0070 | 8B 59 10 AB 23 71 A1 B8 D8 55 B5 78 7B 94 BC 67
+0080 | 06 8C AE 65 73 67 C6 81 70 C0 DE 7E 3D BE A3 89
+0090 | 80 F1 5A 4B E1 C0 A6 F3 B2 C0 FF 27 9D 68 49 65
+00A0 | 85 D2 F5 89 24 EE 2C CC B5 57 46 FA BA AE 2D C0
+00B0 | CC BB 9E 16 8B 79 AB C0 BC 7E 68 BE E0 13 07 08
+00C0 | E6 80 93 8F 7A 2B FA 63 32 85 DA 63 78 4C 8E BE
+00D0 | F6 15 67 55 50 4F 68 00 6E 66 CD F3 46 B1 3B 85
+00E0 | 12 AB E8 30 70 6D D9 26 53 29 EF DE 99 DF B0 F7
+00F0 | 2A A1 11 19 14 0C 94 15 37 35 34 23 29 5C 51 9F
+0100 | 04 A2 5C AC EE 32 93 E8 CF 2C 79 95 15 17 5E 96
+0110 | DD 36 F9 13 BB 4B 1A 19 D9 2E AE 3B C8 88 3A 33
+0120 | 35 23 AC 18 D4 A5 16 5A 32 FD 67 99 04 97 F1 20
+0130 | 8E F6 43 CA 00 93 D0 1D CF 2E 53 7D CB CC 22 58
+0140 | 16 30 29 1B 72 17 60 0B 87 25 E6 57 38 3D 15 69
+0150 | 05 B2 BF 16
+Payload (de)serialization:
+
+req_DH_params#d712e4be nonce:int128 server_nonce:int128 p:string q:string public_key_fingerprint:long encrypted_data:string = Server_DH_Params;
+Parameter	Offset, Length in bytes	Value	Description
+auth_key_id	0, 8	0000000000000000	0 since the message is in plain text
+message_id	8, 8	68E50800EBE57767	Message ID generated as specified here » (unixtime() << 32) + (N*4)
+message_length	16, 4	40010000 (320 in decimal)	Message body length
+%(req_DH_params)	20, 4	bee412d7	req_DH_params constructor number from TL schema
+nonce	24, 16	79F0AFB50252E5FC96924BFCECDA4F05	Value generated by client in Step 1
+server_nonce	40, 16	801775A3EFBFD2701AA28AD727BE4646	Value received from server in Step 2
+p	56, 8	0444095E05000000
+TL byte deserialization
+=> bigendian conversion to decimal
+=> 1141464581	First prime cofactor: single-byte prefix denoting length, 4-byte string, and three bytes of padding
+q	64, 8	0447A8C84F000000
+TL byte deserialization
+=> bigendian conversion to decimal
+=> 1202243663	Second prime cofactor: single-byte prefix denoting length, 4-byte string, and three bytes of padding
+public_key_fingerprint	72, 8	85FD64DE851D9DD0	fingerprint of public key used
+encrypted_data	80, 260	FE00010035D750FBDF8B804F60951295 9103977D8F3B90189B7B2DE9C14F53FF 8B5910AB2371A1B8D855B5787B94BC67 068CAE657367C68170C0DE7E3DBEA389 80F15A4BE1C0A6F3B2C0FF279D684965 85D2F58924EE2CCCB55746FABAAE2DC0 CCBB9E168B79ABC0BC7E68BEE0130708 E680938F7A2BFA633285DA63784C8EBE F6156755504F68006E66CDF346B13B85 12ABE830706DD9265329EFDE99DFB0F7 2AA11119140C941537353423295C519F 04A25CACEE3293E8CF2C799515175E96 DD36F913BB4B1A19D92EAE3BC8883A33 3523AC18D4A5165A32FD67990497F120 8EF643CA0093D01DCF2E537DCBCC2258 1630291B7217600B8725E657383D1569
+05B2BF16	Value generated above
+6) Server responds with:
+Received payload (excluding transport headers/trailers):
+
+0000 | 00 00 00 00 00 00 00 00 01 AC 68 E8 EB E5 77 67
+0010 | 78 02 00 00 5C 07 E8 D0 79 F0 AF B5 02 52 E5 FC
+0020 | 96 92 4B FC EC DA 4F 05 80 17 75 A3 EF BF D2 70
+0030 | 1A A2 8A D7 27 BE 46 46 FE 50 02 00 9A 46 DC E9
+0040 | D5 4D E4 2C 5E 4F 0D 19 D7 76 C8 C1 F3 18 EB 1A
+0050 | F8 83 65 00 B5 DA 1B 1A 80 D5 80 38 A5 54 FE AF
+0060 | 62 7E 6D C4 E4 92 49 43 60 2D 8E 19 48 8A 6E 38
+0070 | A0 B8 13 46 25 7E 4D B5 BE 6E 9E 00 FE 99 1F D6
+0080 | C5 6D 61 8D 3D 0A 24 93 20 26 77 AC 7C F2 45 84
+0090 | 6C 14 94 F6 0D 08 E6 1B 7F EA 8B B7 2D D8 BA 53
+00A0 | F6 CB F7 8F 2B 38 77 57 FE 2E 7F 34 5A 36 8A BB
+00B0 | EC 69 4E FD E0 66 DC 3D 23 75 CF 01 0D 1E 1B F4
+00C0 | 35 17 24 B2 69 E6 8B 54 14 09 E0 76 49 FE EE 1D
+00D0 | F6 DC 5B 3C 18 16 68 79 CC 67 87 67 82 D4 3E C9
+00E0 | B7 9A F8 AC F6 78 68 F4 AB 7D E4 08 26 03 B6 70
+00F0 | EC 62 2B 5D FB BB 9E 90 8F E0 24 45 93 A4 D2 24
+0100 | 74 31 60 20 CE 0E 76 A5 C6 AD 02 1D 39 89 45 1E
+0110 | 0B 3E 8E E4 8C 35 59 92 DB 90 30 0B 37 6B 29 6E
+0120 | 18 BB 47 03 00 C7 DF 14 BF AE 05 A4 52 58 3E AD
+0130 | 93 16 79 41 20 8B BB 5A C8 09 9F 04 94 AA 27 D6
+0140 | C1 A5 B6 78 AD 12 B1 9F B7 D4 23 BB 4A 29 C0 EB
+0150 | 03 16 9E C5 38 21 1D 82 FE B5 0F 20 96 52 D0 0D
+0160 | 33 99 98 6B 3B 0C A0 9C EB 5E 2F CC B4 90 17 FE
+0170 | E5 F5 49 30 D9 DE 37 11 72 B3 FF 10 80 D7 33 E5
+0180 | DD 62 0B 42 DB B7 6A 3E 9C 25 B1 B8 9A B8 AA 35
+0190 | C0 99 32 2C A3 90 E2 69 D8 81 8E A8 72 20 08 DE
+01A0 | 53 77 05 B4 07 1D A7 DE F5 02 FC D5 A3 0D 20 26
+01B0 | EA 8A 87 A0 F4 91 58 03 A8 27 1B 66 56 90 E9 6A
+01C0 | AB DF C0 B4 79 53 8A E6 1B A7 01 ED FF 14 F7 21
+01D0 | 23 70 95 8E D4 1E C8 E4 1E 42 7C 40 7F BB 03 60
+01E0 | 56 5C 1A 6B DF 28 5B C5 12 0B 11 63 1B 75 80 3D
+01F0 | FB F8 AA EB DC 47 41 8A 1F 06 17 47 00 5A BA 93
+0200 | 14 EE 5E 26 1C 3E 50 4E AE 0A DA AC 83 2B 41 4B
+0210 | F6 F7 00 29 82 CE 5B 5A E2 51 37 61 EE 29 FA 1C
+0220 | BA 09 0B 9A 39 AA CE 29 48 A8 0E 14 4D B2 C6 22
+0230 | 58 9D 79 FB 42 E3 DA E4 91 10 4E 8A 65 3D ED 76
+0240 | 29 CD E0 8B 6C 41 E9 0E 55 B0 EB CD 4F 1F C5 0F
+0250 | AD DF 4A 7A 9F 6D 71 1F 09 59 DF EF 04 A7 44 A6
+0260 | AD FD 89 0B 2A B4 05 B9 AD 5F 8E 3F 38 92 81 08
+0270 | F4 CD 0B A5 01 A4 92 FC 46 3B C7 BE 8C 50 6B 5F
+0280 | 7D 24 CC 81 9A 95 92 91 66 B6 E8 14
+Payload (de)serialization:
+
+server_DH_params_ok#d0e8075c nonce:int128 server_nonce:int128 encrypted_answer:string = Server_DH_Params;
+Parameter	Offset, Length in bytes	Value	Description
+auth_key_id	0, 8	0000000000000000	0 since the message is in plain text
+message_id	8, 8	01AC68E8EBE57767	Message ID generated as specified here » (unixtime() << 32) + (N*4)
+message_length	16, 4	78020000 (632 in decimal)	Message body length
+%(server_DH_params_ok)	20, 4	5c07e8d0	server_DH_params_ok constructor number from TL schema
+nonce	24, 16	79F0AFB50252E5FC96924BFCECDA4F05	Value generated by client in Step 1
+server_nonce	40, 16	801775A3EFBFD2701AA28AD727BE4646	Value received from server in Step 2
+encrypted_answer	56, 596	FE5002009A46DCE9D54DE42C5E4F0D19 D776C8C1F318EB1AF8836500B5DA1B1A 80D58038A554FEAF627E6DC4E4924943 602D8E19488A6E38A0B81346257E4DB5 BE6E9E00FE991FD6C56D618D3D0A2493 202677AC7CF245846C1494F60D08E61B 7FEA8BB72DD8BA53F6CBF78F2B387757 FE2E7F345A368ABBEC694EFDE066DC3D 2375CF010D1E1BF4351724B269E68B54 1409E07649FEEE1DF6DC5B3C18166879 CC67876782D43EC9B79AF8ACF67868F4 AB7DE4082603B670EC622B5DFBBB9E90 8FE0244593A4D22474316020CE0E76A5 C6AD021D3989451E0B3E8EE48C355992 DB90300B376B296E18BB470300C7DF14 BFAE05A452583EAD93167941208BBB5A C8099F0494AA27D6C1A5B678AD12B19F B7D423BB4A29C0EB03169EC538211D82 FEB50F209652D00D3399986B3B0CA09C EB5E2FCCB49017FEE5F54930D9DE3711 72B3FF1080D733E5DD620B42DBB76A3E 9C25B1B89AB8AA35C099322CA390E269 D8818EA8722008DE537705B4071DA7DE F502FCD5A30D2026EA8A87A0F4915803 A8271B665690E96AABDFC0B479538AE6 1BA701EDFF14F7212370958ED41EC8E4 1E427C407FBB0360565C1A6BDF285BC5 120B11631B75803DFBF8AAEBDC47418A 1F061747005ABA9314EE5E261C3E504E AE0ADAAC832B414BF6F7002982CE5B5A E2513761EE29FA1CBA090B9A39AACE29 48A80E144DB2C622589D79FB42E3DAE4 91104E8A653DED7629CDE08B6C41E90E 55B0EBCD4F1FC50FADDF4A7A9F6D711F 0959DFEF04A744A6ADFD890B2AB405B9 AD5F8E3F38928108F4CD0BA501A492FC 463BC7BE8C506B5F7D24CC819A959291
+66B6E814	See below
+Decrypt encrypted_answer using the reverse of the process specified in step 6:
+
+encrypted_answer = 9A46DCE9D54DE42C5E4F0D19D776C8C1F318EB1AF8836500B5DA1B1A80D58038A554FEAF627E6DC4E4924943602D8E19488A6E38A0B81346257E4DB5BE6E9E00FE991FD6C56D618D3D0A2493202677AC7CF245846C1494F60D08E61B7FEA8BB72DD8BA53F6CBF78F2B387757FE2E7F345A368ABBEC694EFDE066DC3D2375CF010D1E1BF4351724B269E68B541409E07649FEEE1DF6DC5B3C18166879CC67876782D43EC9B79AF8ACF67868F4AB7DE4082603B670EC622B5DFBBB9E908FE0244593A4D22474316020CE0E76A5C6AD021D3989451E0B3E8EE48C355992DB90300B376B296E18BB470300C7DF14BFAE05A452583EAD93167941208BBB5AC8099F0494AA27D6C1A5B678AD12B19FB7D423BB4A29C0EB03169EC538211D82FEB50F209652D00D3399986B3B0CA09CEB5E2FCCB49017FEE5F54930D9DE371172B3FF1080D733E5DD620B42DBB76A3E9C25B1B89AB8AA35C099322CA390E269D8818EA8722008DE537705B4071DA7DEF502FCD5A30D2026EA8A87A0F4915803A8271B665690E96AABDFC0B479538AE61BA701EDFF14F7212370958ED41EC8E41E427C407FBB0360565C1A6BDF285BC5120B11631B75803DFBF8AAEBDC47418A1F061747005ABA9314EE5E261C3E504EAE0ADAAC832B414BF6F7002982CE5B5AE2513761EE29FA1CBA090B9A39AACE2948A80E144DB2C622589D79FB42E3DAE491104E8A653DED7629CDE08B6C41E90E55B0EBCD4F1FC50FADDF4A7A9F6D711F0959DFEF04A744A6ADFD890B2AB405B9AD5F8E3F38928108F4CD0BA501A492FC463BC7BE8C506B5F7D24CC819A95929166B6E814
+tmp_aes_key = E68CA5ABA101FFCA0ADDA66303A57AFFAA2712FB16A7B8DAFC72C25E8A73A368
+tmp_aes_iv = 0A355D4431B9DDD91A51EFF3F7D340D64F0390C53F91DC53C331D43C264F835B
+Yielding:
+
+answer_with_hash = 4262AD6A332AC2A3050B5142711CE3B7BFD76FABBA0D89B579F0AFB50252E5FC96924BFCECDA4F05801775A3EFBFD2701AA28AD727BE464603000000FE000100C71CAEB9C6B1C9048E6C522F70F13F73980D40238E3E21C14934D037563D930F48198A0AA7C14058229493D22530F4DBFA336F6E0AC925139543AED44CCE7C3720FD51F69458705AC68CD4FE6B6B13ABDC9746512969328454F18FAF8C595F642477FE96BB2A941D5BCD1D4AC8CC49880708FA9B378E3C4F3A9060BEE67CF9A4A4A695811051907E162753B56B0F6B410DBA74D8A84B2A14B3144E0EF1284754FD17ED950D5965B4B9DD46582DB1178D169C6BC465B0D6FF9CA3928FEF5B9AE4E418FC15E83EBEA0F87FA9FF5EED70050DED2849F47BF959D956850CE929851F0D8115F635B105EE2E4E15D04B2454BF6F4FADF034B10403119CD8E3B92FCC5BFE000100236F6D779877A357465CEC030AC5FDA6D6B377372BFA75574289988FD87D966A29B47E0C00BC788900304EA5E03F3856058C309A6CB508553913788D41A61B1D82B0A2F932C68F18FC21851E66D8649AD9E2092F08C96AD67810724369BF0511E74E1F71F1A825EDDFA1D5DC30E359693C0366FF9FB6828699ACFD1F037116F95ADD42F6C64B580B3287AA32FBA518E4B8C9C7B52413B501247DB05ADDD891794394DB529E66890603BCD75CF70E6151398EE85F6D8178EA72C6A61937BCE32BFDAEA86B57A27EBC379933F54C7D44F3E407ED26685D88F0F10A344CDF62F4E20974B374BA1D41DF223A867DD19713CF0FF71F24465D79258B1742916EE35EE3EBE57767E9A54498509543E9
+answer = BA0D89B579F0AFB50252E5FC96924BFCECDA4F05801775A3EFBFD2701AA28AD727BE464603000000FE000100C71CAEB9C6B1C9048E6C522F70F13F73980D40238E3E21C14934D037563D930F48198A0AA7C14058229493D22530F4DBFA336F6E0AC925139543AED44CCE7C3720FD51F69458705AC68CD4FE6B6B13ABDC9746512969328454F18FAF8C595F642477FE96BB2A941D5BCD1D4AC8CC49880708FA9B378E3C4F3A9060BEE67CF9A4A4A695811051907E162753B56B0F6B410DBA74D8A84B2A14B3144E0EF1284754FD17ED950D5965B4B9DD46582DB1178D169C6BC465B0D6FF9CA3928FEF5B9AE4E418FC15E83EBEA0F87FA9FF5EED70050DED2849F47BF959D956850CE929851F0D8115F635B105EE2E4E15D04B2454BF6F4FADF034B10403119CD8E3B92FCC5BFE000100236F6D779877A357465CEC030AC5FDA6D6B377372BFA75574289988FD87D966A29B47E0C00BC788900304EA5E03F3856058C309A6CB508553913788D41A61B1D82B0A2F932C68F18FC21851E66D8649AD9E2092F08C96AD67810724369BF0511E74E1F71F1A825EDDFA1D5DC30E359693C0366FF9FB6828699ACFD1F037116F95ADD42F6C64B580B3287AA32FBA518E4B8C9C7B52413B501247DB05ADDD891794394DB529E66890603BCD75CF70E6151398EE85F6D8178EA72C6A61937BCE32BFDAEA86B57A27EBC379933F54C7D44F3E407ED26685D88F0F10A344CDF62F4E20974B374BA1D41DF223A867DD19713CF0FF71F24465D79258B1742916EE35EE3EBE57767E9A54498509543E9
+Generated payload (excluding transport headers/trailers):
+
+0000 | BA 0D 89 B5 79 F0 AF B5 02 52 E5 FC 96 92 4B FC
+0010 | EC DA 4F 05 80 17 75 A3 EF BF D2 70 1A A2 8A D7
+0020 | 27 BE 46 46 03 00 00 00 FE 00 01 00 C7 1C AE B9
+0030 | C6 B1 C9 04 8E 6C 52 2F 70 F1 3F 73 98 0D 40 23
+0040 | 8E 3E 21 C1 49 34 D0 37 56 3D 93 0F 48 19 8A 0A
+0050 | A7 C1 40 58 22 94 93 D2 25 30 F4 DB FA 33 6F 6E
+0060 | 0A C9 25 13 95 43 AE D4 4C CE 7C 37 20 FD 51 F6
+0070 | 94 58 70 5A C6 8C D4 FE 6B 6B 13 AB DC 97 46 51
+0080 | 29 69 32 84 54 F1 8F AF 8C 59 5F 64 24 77 FE 96
+0090 | BB 2A 94 1D 5B CD 1D 4A C8 CC 49 88 07 08 FA 9B
+00A0 | 37 8E 3C 4F 3A 90 60 BE E6 7C F9 A4 A4 A6 95 81
+00B0 | 10 51 90 7E 16 27 53 B5 6B 0F 6B 41 0D BA 74 D8
+00C0 | A8 4B 2A 14 B3 14 4E 0E F1 28 47 54 FD 17 ED 95
+00D0 | 0D 59 65 B4 B9 DD 46 58 2D B1 17 8D 16 9C 6B C4
+00E0 | 65 B0 D6 FF 9C A3 92 8F EF 5B 9A E4 E4 18 FC 15
+00F0 | E8 3E BE A0 F8 7F A9 FF 5E ED 70 05 0D ED 28 49
+0100 | F4 7B F9 59 D9 56 85 0C E9 29 85 1F 0D 81 15 F6
+0110 | 35 B1 05 EE 2E 4E 15 D0 4B 24 54 BF 6F 4F AD F0
+0120 | 34 B1 04 03 11 9C D8 E3 B9 2F CC 5B FE 00 01 00
+0130 | 23 6F 6D 77 98 77 A3 57 46 5C EC 03 0A C5 FD A6
+0140 | D6 B3 77 37 2B FA 75 57 42 89 98 8F D8 7D 96 6A
+0150 | 29 B4 7E 0C 00 BC 78 89 00 30 4E A5 E0 3F 38 56
+0160 | 05 8C 30 9A 6C B5 08 55 39 13 78 8D 41 A6 1B 1D
+0170 | 82 B0 A2 F9 32 C6 8F 18 FC 21 85 1E 66 D8 64 9A
+0180 | D9 E2 09 2F 08 C9 6A D6 78 10 72 43 69 BF 05 11
+0190 | E7 4E 1F 71 F1 A8 25 ED DF A1 D5 DC 30 E3 59 69
+01A0 | 3C 03 66 FF 9F B6 82 86 99 AC FD 1F 03 71 16 F9
+01B0 | 5A DD 42 F6 C6 4B 58 0B 32 87 AA 32 FB A5 18 E4
+01C0 | B8 C9 C7 B5 24 13 B5 01 24 7D B0 5A DD D8 91 79
+01D0 | 43 94 DB 52 9E 66 89 06 03 BC D7 5C F7 0E 61 51
+01E0 | 39 8E E8 5F 6D 81 78 EA 72 C6 A6 19 37 BC E3 2B
+01F0 | FD AE A8 6B 57 A2 7E BC 37 99 33 F5 4C 7D 44 F3
+0200 | E4 07 ED 26 68 5D 88 F0 F1 0A 34 4C DF 62 F4 E2
+0210 | 09 74 B3 74 BA 1D 41 DF 22 3A 86 7D D1 97 13 CF
+0220 | 0F F7 1F 24 46 5D 79 25 8B 17 42 91 6E E3 5E E3
+0230 | EB E5 77 67
+Payload (de)serialization:
+
+server_DH_inner_data#b5890dba nonce:int128 server_nonce:int128 g:int dh_prime:string g_a:string server_time:int = Server_DH_inner_data;
+Parameter	Offset, Length in bytes	Value	Description
+%(server_DH_inner_data)	0, 4	ba0d89b5	server_DH_inner_data constructor number from TL schema
+nonce	4, 16	79F0AFB50252E5FC96924BFCECDA4F05	Value generated by client in Step 1
+server_nonce	20, 16	801775A3EFBFD2701AA28AD727BE4646	Value received from server in Step 2
+g	36, 4	03000000 (3 in decimal)	Value received from server in Step 2
+dh_prime	40, 260	FE000100C71CAEB9C6B1C9048E6C522F 70F13F73980D40238E3E21C14934D037 563D930F48198A0AA7C14058229493D2 2530F4DBFA336F6E0AC925139543AED4 4CCE7C3720FD51F69458705AC68CD4FE 6B6B13ABDC9746512969328454F18FAF 8C595F642477FE96BB2A941D5BCD1D4A C8CC49880708FA9B378E3C4F3A9060BE E67CF9A4A4A695811051907E162753B5 6B0F6B410DBA74D8A84B2A14B3144E0E F1284754FD17ED950D5965B4B9DD4658 2DB1178D169C6BC465B0D6FF9CA3928F EF5B9AE4E418FC15E83EBEA0F87FA9FF 5EED70050DED2849F47BF959D956850C E929851F0D8115F635B105EE2E4E15D0 4B2454BF6F4FADF034B10403119CD8E3
+B92FCC5B	2048-bit prime, in big-endian byte order, to be checked as specified in the auth key docs
+g_a	300, 260	FE000100236F6D779877A357465CEC03 0AC5FDA6D6B377372BFA75574289988F D87D966A29B47E0C00BC788900304EA5 E03F3856058C309A6CB508553913788D 41A61B1D82B0A2F932C68F18FC21851E 66D8649AD9E2092F08C96AD678107243 69BF0511E74E1F71F1A825EDDFA1D5DC 30E359693C0366FF9FB6828699ACFD1F 037116F95ADD42F6C64B580B3287AA32 FBA518E4B8C9C7B52413B501247DB05A DDD891794394DB529E66890603BCD75C F70E6151398EE85F6D8178EA72C6A619 37BCE32BFDAEA86B57A27EBC379933F5 4C7D44F3E407ED26685D88F0F10A344C DF62F4E20974B374BA1D41DF223A867D D19713CF0FF71F24465D79258B174291
+6EE35EE3	g_a diffie-hellman parameter
+server_time	560, 4	EBE57767 (1735910891 in decimal)	Server time
+7) Client computes random 2048-bit number b (using a sufficient amount of entropy) and sends the server a message
+First, generate a secure random 2048-bit number b:
+
+b = F2987DDA0ABCE0B7CE23A7B850BE126641CBAABC1F4C250C839E1844E2E2CBE57BC0A30B45F6C21D8635F5E927DB0D7498A2F03C6A42D3FB2F3787D5B4D63C2F17A6EB197C0412237E528B68D3D70ADCDEEBD7CD6BACEC59D4FB8F17125ED00B95B34A2D5D8A2133937B5DFEF6DB09F0A3A1BC207A87D9FE4761C59880CA551432E4AFFCF3982B11EABC526977215F4AC2CE20FA7C808A971DA8C8A08FF26DEBB326EE580B551BEAF0C4B677FCE00E5C6AAEDA3A5A42F38C9C6E226EEDED0502A6BEFC991CC1E0B504E187206D172E72E05D958009FB8C27616EBDD28247262A33AF25E911C9DC22D9A88C6E31A623E6C1E1011CDBD184F6DFFC4F77F5370F16
+Then compute g_b = pow(g, b) mod dh_prime
+
+g_b = 5EEDFBF6A2199CD1B06182C5C4E0DC26B69ECDE1AD6430D192CD8A69E7434B66A42900AF29B3F41C619AD383FB3721705CF52C34C0507433F743592EE5D4FC50F64E0F8686870E36179AF8C8F4587BD572E98AF4A8247DE2F524BCD48642B38F36104046D7502CDC14BF39A88422B4B1111D886A326C473D1145E69E37C676E1E8FDA07E470482F853886700AE1E7FFDE69FF6D40547C515110B74C6680C844B61504FE0A2D3E08BB7BAE70016C97D7E6B7FA4CEBFE6B5BE30C884849ADE39CC50FD9B4FB16F671EFE8533D0BF7FF8BF13957F1E0D55E713199CEACC72419AF60CDB1D561084565E9F090141B9F8732B2E806C1B01B25BAFFC4EE1BD5525CB8A
+7.1) generation of encrypted_data
+Generated payload (excluding transport headers/trailers):
+
+0000 | 54 B6 43 66 79 F0 AF B5 02 52 E5 FC 96 92 4B FC
+0010 | EC DA 4F 05 80 17 75 A3 EF BF D2 70 1A A2 8A D7
+0020 | 27 BE 46 46 00 00 00 00 00 00 00 00 FE 00 01 00
+0030 | 5E ED FB F6 A2 19 9C D1 B0 61 82 C5 C4 E0 DC 26
+0040 | B6 9E CD E1 AD 64 30 D1 92 CD 8A 69 E7 43 4B 66
+0050 | A4 29 00 AF 29 B3 F4 1C 61 9A D3 83 FB 37 21 70
+0060 | 5C F5 2C 34 C0 50 74 33 F7 43 59 2E E5 D4 FC 50
+0070 | F6 4E 0F 86 86 87 0E 36 17 9A F8 C8 F4 58 7B D5
+0080 | 72 E9 8A F4 A8 24 7D E2 F5 24 BC D4 86 42 B3 8F
+0090 | 36 10 40 46 D7 50 2C DC 14 BF 39 A8 84 22 B4 B1
+00A0 | 11 1D 88 6A 32 6C 47 3D 11 45 E6 9E 37 C6 76 E1
+00B0 | E8 FD A0 7E 47 04 82 F8 53 88 67 00 AE 1E 7F FD
+00C0 | E6 9F F6 D4 05 47 C5 15 11 0B 74 C6 68 0C 84 4B
+00D0 | 61 50 4F E0 A2 D3 E0 8B B7 BA E7 00 16 C9 7D 7E
+00E0 | 6B 7F A4 CE BF E6 B5 BE 30 C8 84 84 9A DE 39 CC
+00F0 | 50 FD 9B 4F B1 6F 67 1E FE 85 33 D0 BF 7F F8 BF
+0100 | 13 95 7F 1E 0D 55 E7 13 19 9C EA CC 72 41 9A F6
+0110 | 0C DB 1D 56 10 84 56 5E 9F 09 01 41 B9 F8 73 2B
+0120 | 2E 80 6C 1B 01 B2 5B AF FC 4E E1 BD 55 25 CB 8A
+Payload (de)serialization:
+
+client_DH_inner_data#6643b654 nonce:int128 server_nonce:int128 retry_id:long g_b:string = Client_DH_Inner_Data;
+Parameter	Offset, Length in bytes	Value	Description
+%(client_DH_inner_data)	0, 4	54b64366	client_DH_inner_data constructor number from TL schema
+nonce	4, 16	79F0AFB50252E5FC96924BFCECDA4F05	Value generated by client in Step 1
+server_nonce	20, 16	801775A3EFBFD2701AA28AD727BE4646	Value received from server in Step 2
+g_b	36, 260	FE0001005EEDFBF6A2199CD1B06182C5 C4E0DC26B69ECDE1AD6430D192CD8A69 E7434B66A42900AF29B3F41C619AD383 FB3721705CF52C34C0507433F743592E E5D4FC50F64E0F8686870E36179AF8C8 F4587BD572E98AF4A8247DE2F524BCD4 8642B38F36104046D7502CDC14BF39A8 8422B4B1111D886A326C473D1145E69E 37C676E1E8FDA07E470482F853886700 AE1E7FFDE69FF6D40547C515110B74C6 680C844B61504FE0A2D3E08BB7BAE700 16C97D7E6B7FA4CEBFE6B5BE30C88484 9ADE39CC50FD9B4FB16F671EFE8533D0 BF7FF8BF13957F1E0D55E713199CEACC 72419AF60CDB1D561084565E9F090141 B9F8732B2E806C1B01B25BAFFC4EE1BD
+5525CB8A	Single-byte prefix denoting length, a 256-byte (2048-bit) string, and zero bytes of padding
+retry_id	296, 8	0000000000000000	Equal to zero at the time of the first attempt; otherwise, it is equal to auth_key_aux_hash from the previous failed attempt (see Item 7).
+The serialization of Client_DH_Inner_Data produces a string data. This is used to generate encrypted_data as specified in step 6, using the following inputs:
+
+data = 54B6436679F0AFB50252E5FC96924BFCECDA4F05801775A3EFBFD2701AA28AD727BE46460000000000000000FE0001005EEDFBF6A2199CD1B06182C5C4E0DC26B69ECDE1AD6430D192CD8A69E7434B66A42900AF29B3F41C619AD383FB3721705CF52C34C0507433F743592EE5D4FC50F64E0F8686870E36179AF8C8F4587BD572E98AF4A8247DE2F524BCD48642B38F36104046D7502CDC14BF39A88422B4B1111D886A326C473D1145E69E37C676E1E8FDA07E470482F853886700AE1E7FFDE69FF6D40547C515110B74C6680C844B61504FE0A2D3E08BB7BAE70016C97D7E6B7FA4CEBFE6B5BE30C884849ADE39CC50FD9B4FB16F671EFE8533D0BF7FF8BF13957F1E0D55E713199CEACC72419AF60CDB1D561084565E9F090141B9F8732B2E806C1B01B25BAFFC4EE1BD5525CB8A
+padding = 8347525EB8B63DE9CE3A1FCC
+tmp_aes_key = E68CA5ABA101FFCA0ADDA66303A57AFFAA2712FB16A7B8DAFC72C25E8A73A368
+tmp_aes_iv = 0A355D4431B9DDD91A51EFF3F7D340D64F0390C53F91DC53C331D43C264F835B
+Process:
+
+data_with_hash := SHA1(data) + data + padding (0-15 random bytes such that total length is divisible by 16)
+encrypted_data := AES256_ige_encrypt (data_with_hash, tmp_aes_key, tmp_aes_iv);
+Output:
+
+encrypted_data = FA29896EE19D3CCB08FB07CF1C922CFFBF5D38D98BA56D926D63064C77741F423BCE22B5A2C100E34BB5D7CE3027E85E65006205B6926C0E42EF29E7CC24EEC4523650F692A530FB95D57EF3604C490155FB8530C94E9E2EBDF272BDB3DD98FFCA65FF51E5DBCA4CF799D6660F6D0BA1A8B1CE6FE9D26F401B1B79E057EE273CAE14D8D8D60030C862E13B2E49FE97008AEA0EC8ADE90AE3DDDC641AE7C0844A37EFC4DA3B27308B9C40B1FD2028C12B37EA719D593DC7EDC892B8630B82E05168FCC0D76E7CA23106FEF13B09D3BAE83D612CDF2E3A5ADDE4E807EEED660C9921AD364CFF6614350F313A48AB3483F08AB81A226F7763A575F44A04BD53C58A49ABD2EE4A885F2610A8387803E418C371AF9378A0941F2DB0AA9CE019048B6C9ED0C7FCB33985624E2392233CAA5E66A3891AB18544685E96EF5C2B55E69EA2C62B33E6058DA2944F087B803F251A7C
+The length of the final string is 336 bytes.
+
+7.2) set_client_DH_params query
+Sent payload (excluding transport headers/trailers):
+
+0000 | 00 00 00 00 00 00 00 00 6C E5 08 00 EB E5 77 67
+0010 | 78 01 00 00 1F 5F 04 F5 79 F0 AF B5 02 52 E5 FC
+0020 | 96 92 4B FC EC DA 4F 05 80 17 75 A3 EF BF D2 70
+0030 | 1A A2 8A D7 27 BE 46 46 FE 50 01 00 FA 29 89 6E
+0040 | E1 9D 3C CB 08 FB 07 CF 1C 92 2C FF BF 5D 38 D9
+0050 | 8B A5 6D 92 6D 63 06 4C 77 74 1F 42 3B CE 22 B5
+0060 | A2 C1 00 E3 4B B5 D7 CE 30 27 E8 5E 65 00 62 05
+0070 | B6 92 6C 0E 42 EF 29 E7 CC 24 EE C4 52 36 50 F6
+0080 | 92 A5 30 FB 95 D5 7E F3 60 4C 49 01 55 FB 85 30
+0090 | C9 4E 9E 2E BD F2 72 BD B3 DD 98 FF CA 65 FF 51
+00A0 | E5 DB CA 4C F7 99 D6 66 0F 6D 0B A1 A8 B1 CE 6F
+00B0 | E9 D2 6F 40 1B 1B 79 E0 57 EE 27 3C AE 14 D8 D8
+00C0 | D6 00 30 C8 62 E1 3B 2E 49 FE 97 00 8A EA 0E C8
+00D0 | AD E9 0A E3 DD DC 64 1A E7 C0 84 4A 37 EF C4 DA
+00E0 | 3B 27 30 8B 9C 40 B1 FD 20 28 C1 2B 37 EA 71 9D
+00F0 | 59 3D C7 ED C8 92 B8 63 0B 82 E0 51 68 FC C0 D7
+0100 | 6E 7C A2 31 06 FE F1 3B 09 D3 BA E8 3D 61 2C DF
+0110 | 2E 3A 5A DD E4 E8 07 EE ED 66 0C 99 21 AD 36 4C
+0120 | FF 66 14 35 0F 31 3A 48 AB 34 83 F0 8A B8 1A 22
+0130 | 6F 77 63 A5 75 F4 4A 04 BD 53 C5 8A 49 AB D2 EE
+0140 | 4A 88 5F 26 10 A8 38 78 03 E4 18 C3 71 AF 93 78
+0150 | A0 94 1F 2D B0 AA 9C E0 19 04 8B 6C 9E D0 C7 FC
+0160 | B3 39 85 62 4E 23 92 23 3C AA 5E 66 A3 89 1A B1
+0170 | 85 44 68 5E 96 EF 5C 2B 55 E6 9E A2 C6 2B 33 E6
+0180 | 05 8D A2 94 4F 08 7B 80 3F 25 1A 7C
+Payload (de)serialization:
+
+set_client_DH_params#f5045f1f nonce:int128 server_nonce:int128 encrypted_data:string = Set_client_DH_params_answer;
+Parameter	Offset, Length in bytes	Value	Description
+auth_key_id	0, 8	0000000000000000	0 since the message is in plain text
+message_id	8, 8	6CE50800EBE57767	Message ID generated as specified here » (unixtime() << 32) + (N*4)
+message_length	16, 4	78010000 (376 in decimal)	Message body length
+%(set_client_DH_params)	20, 4	1f5f04f5	set_client_DH_params constructor number from TL schema
+nonce	24, 16	79F0AFB50252E5FC96924BFCECDA4F05	Value generated by client in Step 1
+server_nonce	40, 16	801775A3EFBFD2701AA28AD727BE4646	Value received from server in Step 2
+encrypted_data	56, 340	FE500100FA29896EE19D3CCB08FB07CF 1C922CFFBF5D38D98BA56D926D63064C 77741F423BCE22B5A2C100E34BB5D7CE 3027E85E65006205B6926C0E42EF29E7 CC24EEC4523650F692A530FB95D57EF3 604C490155FB8530C94E9E2EBDF272BD B3DD98FFCA65FF51E5DBCA4CF799D666 0F6D0BA1A8B1CE6FE9D26F401B1B79E0 57EE273CAE14D8D8D60030C862E13B2E 49FE97008AEA0EC8ADE90AE3DDDC641A E7C0844A37EFC4DA3B27308B9C40B1FD 2028C12B37EA719D593DC7EDC892B863 0B82E05168FCC0D76E7CA23106FEF13B 09D3BAE83D612CDF2E3A5ADDE4E807EE ED660C9921AD364CFF6614350F313A48 AB3483F08AB81A226F7763A575F44A04 BD53C58A49ABD2EE4A885F2610A83878 03E418C371AF9378A0941F2DB0AA9CE0 19048B6C9ED0C7FCB33985624E239223 3CAA5E66A3891AB18544685E96EF5C2B 55E69EA2C62B33E6058DA2944F087B80
+3F251A7C	Encrypted client_DH_inner_data generated previously, serialized as a TL byte string
+8) Auth key generation
+The client computes the auth_key using formula g_a^b mod dh_prime:
+
+auth_key = 83CBD31C0303361FF1C29437A77CBA749C84F28A118646038C7EDD29EF718A1F6A493047D476A6E678D97A4A5CC7990CEA552D68E109869E5BFC86570049CD8F2EB4BA10B6C4123FB8A977774B4C5185B5C96AF7BD7A71DB78E6E6148CED2048869A21B8ED7FBA7F6F2E7722BFA28447AB84A245CB0E6D01261191B753191E744DCFDA522D50167832EE4D5EE90AAA6F31821248F0F06BF5692EF604CFC4316CEDE078F71E17BCEBBE388589E6707AF5BA26E8DD063BB116C4B4E7BEF3B462C3350D0376D42F95D353E46BE4C378D2A60141A2339641F8B712EB3ECFB42B7F26F69E9BB15373E0AC4BE266E1681859DDAAB8CD7D877BB847D2A8BD068A784943
+9) Final server reply
+The server verifies and confirms that auth_key_hash is unique: since it's unique, it replies with the following:
+
+Received payload (excluding transport headers/trailers):
+
+0000 | 00 00 00 00 00 00 00 00 01 CC 0A 7B ED E5 77 67
+0010 | 34 00 00 00 34 F7 CB 3B 79 F0 AF B5 02 52 E5 FC
+0020 | 96 92 4B FC EC DA 4F 05 80 17 75 A3 EF BF D2 70
+0030 | 1A A2 8A D7 27 BE 46 46 51 07 0B 3D B6 72 B7 60
+0040 | 2E 4E E2 FE 76 1B 36 A2
+Payload (de)serialization:
+
+dh_gen_ok#3bcbf734 nonce:int128 server_nonce:int128 new_nonce_hash1:int128 = Set_client_DH_params_answer;
+Parameter	Offset, Length in bytes	Value	Description
+auth_key_id	0, 8	0000000000000000	0 since the message is in plain text
+message_id	8, 8	01CC0A7BEDE57767	Message ID generated as specified here » (unixtime() << 32) + (N*4)
+message_length	16, 4	34000000 (52 in decimal)	Message body length
+%(dh_gen_ok)	20, 4	34f7cb3b	dh_gen_ok constructor number from TL schema
+nonce	24, 16	79F0AFB50252E5FC96924BFCECDA4F05	Value generated by client in Step 1
+server_nonce	40, 16	801775A3EFBFD2701AA28AD727BE4646	Value received from server in Step 2
+new_nonce_hash1	56, 16	51070B3DB672B7602E4EE2FE761B36A2	The 128 lower-order bits of SHA1 of the byte string derived from the new_nonce string by adding a single byte with the value of 1, 2, or 3, and followed by another 8 bytes with auth_key_aux_hash. Different values are required to prevent an intruder from changing server response dh_gen_ok into dh_gen_retry.
+Mobile Protocol: Detailed Description
+As of version 4.6, major Telegram clients are using MTProto 2.0. MTProto v.1.0 is deprecated and is currently being phased out.
+
+This article describes the basic layer of the MTProto protocol version 2.0 (Cloud chats, server-client encryption). The principal differences from version 1.0 (described here for reference) are as follows:
+
+SHA-256 is used instead of SHA-1;
+Padding bytes are involved in the computation of msg_key;
+msg_key depends not only on the message to be encrypted, but on a portion of auth_key as well;
+12..1024 padding bytes are used instead of 0..15 padding bytes in v.1.0.
+See also: MTProto 2.0: Secret Chats, end-to-end encryption
+
+Protocol description
+Before a message (or a multipart message) is transmitted over a network using a transport protocol, it is encrypted in a certain way, and an external header is added at the top of the message that consists of a 64-bit key identifier auth_key_id (that uniquely identifies an authorization key for the server as well as the user) and a 128-bit message key msg_key.
+
+The authorization key auth_key combined with the message key msg_key define an actual 256-bit key aes_key and a 256-bit initialization vector aes_iv, which are used to encrypt the message using AES-256 encryption in infinite garble extension (IGE) mode. Note that the initial part of the message to be encrypted contains variable data (session, message ID, sequence number, server salt) that obviously influences the message key (and thus the AES key and iv). In MTProto 2.0, the message key is defined as the 128 middle bits of the SHA-256 of the message body (including session, message ID, padding, etc.) prepended by 32 bytes taken from the authorization key. In the older MTProto 1.0, the message key was computed as the lower 128 bits of SHA-1 of the message body, excluding the padding bytes.
+
+Multipart messages are encrypted as a single message.
+
+MTProto server-client encryption, cloud chats
+Got questions about this setup? — Check out the Advanced FAQ!
+
+Note 1
+Each plaintext message to be encrypted in MTProto always contains the following data to be checked upon decryption in order to make the system robust against known problems with the components:
+
+server salt (64-Bit)
+session id
+message sequence number
+message length
+time
+Note 2
+Telegram's End-to-end encrypted Secret Chats are using an additional layer of encryption on top of the described above. See Secret Chats, End-to-End encryption for details.
+
+MTProto supports Perfect Forward Secrecy in both cloud chats and secret chats.
+
+Terminology
+Authorization Key (auth_key)
+A 2048-bit key shared by the client device and the server, created upon user registration directly on the client device by exchanging Diffie-Hellman keys, and never transmitted over a network. Each authorization key is user-specific. There is nothing that prevents a user from having several keys (that correspond to “permanent sessions” on different devices), and some of these may be locked forever in the event the device is lost. See also Creating an Authorization Key.
+
+Server Key
+A 2048-bit RSA key used by the server digitally to sign its own messages while registration is underway and the authorization key is being generated. The application has a built-in public server key which can be used to verify a signature but cannot be used to sign messages. A private server key is stored on the server and changed very infrequently.
+
+Key Identifier (auth_key_id)
+The 64 lower-order bits of the SHA1 hash of the authorization key are used to indicate which particular key was used to encrypt a message. Keys must be uniquely defined by the 64 lower-order bits of their SHA1, and in the event of a collision, an authorization key is regenerated. A zero key identifier means that encryption is not used which is permissible for a limited set of message types used during registration to generate an authorization key in a Diffie-Hellman exchange. For MTProto 2.0, SHA1 is still used here, because auth_key_id should identify the authorization key used independently of the protocol version.
+
+Session
+A (random) 64-bit number generated by the client to distinguish between individual sessions (for example, between different instances of the application, created with the same authorization key). The session in conjunction with the key identifier corresponds to an application instance. The server can maintain session state. Under no circumstances can a message meant for one session be sent into a different session. The server may unilaterally forget any client sessions; clients should be able to handle this.
+
+Server Salt
+A (random) 64-bit number changed every 30 minutes (separately for each session) at the request of the server. All subsequent messages must contain the new salt (although, messages with the old salt are still accepted for a further 1800 seconds). Required to protect against replay attacks and certain tricks associated with adjusting the client clock to a moment in the distant future.
+
+Message Identifier (msg_id)
+A (time-dependent) 64-bit number used uniquely to identify a message within a session. Client message identifiers are divisible by 4, server message identifiers modulo 4 yield 1 if the message is a response to a client message, and 3 otherwise. Client message identifiers must increase monotonically (within a single session), the same as server message identifiers, and must approximately equal unixtime*2^32. This way, a message identifier points to the approximate moment in time the message was created. A message is rejected over 300 seconds after it is created or 30 seconds before it is created (this is needed to protect from replay attacks). In this situation, it must be re-sent with a different identifier (or placed in a container with a higher identifier). The identifier of a message container must be strictly greater than those of its nested messages.
+
+Important: to counter replay-attacks the lower 32 bits of msg_id passed by the client must not be empty and must present a fractional part of the time point when the message was created.
+
+Message Sequence Number (msg_seqno)
+A 32-bit number equal to twice the number of content-related » messages created by the sender prior to this message and subsequently incremented by one if the current message is a content-related message.
+
+The seqno of a content-related message is thus msg.seqNo = (current_seqno*2)+1 (and after generating it, the local current_seqno counter must be incremented by 1), the seqno of a non-content related message is msg.seqNo = (current_seqno*2) (current_seqno must not be incremented by 1 after generation).
+
+Thus, the content-relatedness of an incoming MTProto message can simply be determined by checking the value of the least-significant bit of the seqno of the message (message.isContentRelated = (message.seqNo & 1) == 1).
+
+A container is always generated after its entire contents; therefore, its sequence number is greater than or equal to the sequence numbers of the messages contained in it.
+
+Content-related Message
+When receiving an MTProto message that is marked as content-related by setting the least-significant bit of the seqno, the receiving party must acknowledge it in some way.
+
+When the receiving party is the client, this must be done through msgs_ack constructors.
+
+When the receiving party is the server, this is usually done through msgs_ack constructors, but may also be done using the reply of a method, or an error, or some other way, as specified by the documentation of each method or constructor.
+
+When a TCP transport is used, the content-relatedness of constructors affects the server's behavior: the server will resend not-yet acknowledged content-related messages to a new connection if the current connection is closed and then re-opened.
+
+A client must always mark all API-level RPC queries as content-related, or else a bad_msg_notification with error_code=35 will be emitted.
+
+A client must never mark msgs_ack, msg_container, msg_copy, gzip_packed constructors (i.e. containers and acknowledgements) as content-related, or else a bad_msg_notification with error_code=34 will be emitted.
+
+A client may mark any other constructor except the four specified above as content-related, to improve reliability in case of network issues by requesting acknowledgements from the server.
+
+Message Key (msg_key)
+In MTProto 2.0, the middle 128 bits of the SHA-256 hash of the message to be encrypted (including the internal header and the padding bytes for MTProto 2.0), prepended by a 32-byte fragment of the authorization key.
+
+In MTProto 1.0, message key was defined differently, as the lower 128 bits of the SHA-1 hash of the message to be encrypted, with padding bytes excluded from the computation of the hash. Authorization key was not involved in this computation.
+
+Internal (cryptographic) Header
+A header (16 bytes) added before a message or a container before it is all encrypted together. Consists of the server salt (64 bits) and the session (64 bits).
+
+External (cryptographic) Header
+A header (24 bytes) added before an encrypted message or a container. Consists of the key identifier auth_key_id (64 bits) and the message key msg_key (128 bits).
+
+Payload
+External header + encrypted message or container.
+
+Defining AES Key and Initialization Vector
+The 2048-bit authorization key (auth_key) and the 128-bit message key (msg_key) are used to compute a 256-bit AES key (aes_key) and a 256-bit initialization vector (aes_iv) which are subsequently used to encrypt the part of the message to be encrypted (i. e. everything with the exception of the external header that is added later) with AES-256 in infinite garble extension (IGE) mode.
+
+For MTProto 2.0, the algorithm for computing aes_key and aes_iv from auth_key and msg_key is as follows.
+
+msg_key_large = SHA256 (substr (auth_key, 88+x, 32) + plaintext + random_padding);
+msg_key = substr (msg_key_large, 8, 16);
+sha256_a = SHA256 (msg_key + substr (auth_key, x, 36));
+sha256_b = SHA256 (substr (auth_key, 40+x, 36) + msg_key);
+aes_key = substr (sha256_a, 0, 8) + substr (sha256_b, 8, 16) + substr (sha256_a, 24, 8);
+aes_iv = substr (sha256_b, 0, 8) + substr (sha256_a, 8, 16) + substr (sha256_b, 24, 8);
+where x = 0 for messages from client to server and x = 8 for those from server to client.
+
+For the obsolete MTProto 1.0, msg_key, aes_key, and aes_iv were computed differently (see this document for reference).
+
+The lower-order 1024 bits of auth_key are not involved in the computation. They may (together with the remaining bits or separately) be used on the client device to encrypt the local copy of the data received from the server. The 512 lower-order bits of auth_key are not stored on the server; therefore, if the client device uses them to encrypt local data and the user loses the key or the password, data decryption of local data is impossible (even if data from the server could be obtained).
+
+In MTProto 1.0, when AES was used to encrypt a block of data of a length not divisible by 16 bytes, the data was padded with 0 to 15 random padding bytes random_padding to a length divisible by 16 bytes prior to encryption. In MTProto 2.0, this padding is taken into account when computing msg_key. Note that MTProto 2.0 requires from 12 to 1024 bytes of padding, still subject to the condition that the resulting message length be divisible by 16 bytes.
+
+Using MTProto 2.0 instead of MTProto 1.0
+A client may either use only MTProto 2.0 or only MTProto 1.0 in the same TCP connection. The server detects the protocol used by the first message received from the client, and then uses the same encryption for its messages, and expects the client to use the same encryption henceforth. We recommend using MTProto 2.0; MTProto 1.0 is deprecated and supported for backward compatibility only.
+
+Important Checks
+When an encrypted message is received, it must be checked that msg_key is in fact equal to the 128 middle bits of the SHA-256 of the decrypted data with a 32-byte fragment of auth_key prepended to it, and that msg_id has even parity for messages from client to server, and odd parity for messages from server to client.
+
+In addition, the identifiers (msg_id) of the last N messages received from the other side must be stored, and if a message comes in with msg_id lower than all or equal to any of the stored values, the message is to be ignored. Otherwise, the new message msg_id is added to the set, and, if the number of stored msg_id values is greater than N, the oldest (i. e. the lowest) is forgotten.
+
+On top of this, msg_id values that belong over 30 seconds in the future or over 300 seconds in the past are to be ignored. This is especially important for the server. The client would also find this useful (to protect from a replay attack), but only if it is certain of its time (for example, if its time has been synchronized with that of the server).
+
+Certain client-to-server service messages containing data sent by the client to the server (for example, msg_id of a recent client query) may, nonetheless, be processed on the client even if the time appears to be “incorrect”. This is especially true of messages to change server_salt and notifications of invalid client time. See Mobile Protocol: Service Messages.
+
+Storing an Authorization Key on a Client Device
+It may be suggested to users concerned with security that they password protect the authorization key in approximately the same way as in ssh. This can be accomplished by prepending the value of a cryptographic hash function, such as SHA-256, of the key to the front of the key, following which the entire string is encrypted using AES in CBC mode and a key equal to the user's (text) password. When the user inputs the password, the stored protected password is decrypted and verified by checking the SHA-256 value. From the user's standpoint, this is practically the same as using an application or a website password.
+
+Unencrypted Messages
+Special plain-text messages may be used to create an authorization key as well as to perform a time synchronization. They begin with auth_key_id = 0 (64 bits) which means that there is no auth_key. This is followed directly by the message body in serialized format without internal or external headers. A message identifier (64 bits) and body length in bytes (32 bytes) are added before the message body.
+
+Only a very limited number of messages of special types can be transmitted as plain text.
+
+Schematic Presentation of Messages
+Encrypted Message
+auth_key_id
+int64	msg_key
+int128	encrypted_data
+bytes
+Encrypted Message: encrypted_data
+Contains the cypher text for the following data:
+
+salt
+int64	session_id
+int64	message_id
+int64	seq_no
+int32	message_data_length
+int32	message_data
+bytes	padding12..1024
+bytes
+Unencrypted Message
+auth_key_id = 0
+int64	message_id
+int64	message_data_length
+int32	message_data
+bytes
+MTProto 2.0 uses 12..1024 padding bytes, instead of the 0..15 used in MTProto 1.0
+
+Creating an Authorization Key
+An authorization key is normally created once for every user during the application installation process immediately prior to registration. Registration itself, in actuality, occurs after the authorization key is created. However, a user may be prompted to complete the registration form while the authorization key is being generated in the background. Intervals between user key strokes may be used as a source of entropy in the generation of high-quality random numbers required for the creation of an authorization key.
+
+See Creating an Authorization Key.
+
+During the creation of the authorization key, the client obtains its server salt (to be used with the new key for all communication in the near future). The client then creates an encrypted session using the newly generated key, and subsequent communication occurs within that session (including the transmission of the user's registration information and phone number validation) unless the client creates a new session. The client is free to create new or additional sessions at any time by choosing a new random session_id.
+Replay attacks
+Replay attacks are denied because each plaintext to be encrypted contains the server salt and the unique message id and sequence number.
+
+This means that each message can only be sent once.
+
+Man-in-the-middle attacks
+Telegram has two modes of communication — ordinary chats using client-server encryption and Secret Chats using end-to-end encryption.
+
+Client-Server communication is protected from MiTM-attacks during DH key generation by means of a server RSA public key embedded into client software. After that, if both clients trust the server software, the Secret Chats between them are protected by the server from MiTM attacks.
+
+The interface offers a way of comparing Secret Chat keys for users who do not trust the server. Visualizations of the key are presented in the form of identicons (example here). By comparing key visualizations users can make sure no MITM attack had taken place.
+
+Hash collisions for Diffie-Hellman Keys
+Currently, the fingerprint uses 128-bits of SHA-1 concatenated with 160 bits from the SHA-256 of the key, yielding a total of 288 fingerprint bits, thus negating the possibility of hash-collision attacks.
+
+Read more about fingerprints in earlier versions of Telegram
+(Note on 'plaintext':
+It is important that the plaintext always contains message length, server salt, session_id and other data not known to the attacker. It is crucial that AES decryption keys depend both on msg_key, and on auth_key, known only to the parties involved in the exchange.
+
+What about IND-CCA?
+The current version of MTProto satisfies the criteria for IND-CCA. MTProto 1.0 used to deviate from this property without any effect on message security.
+
+Properties like IND-CCA are convenient for theoretical definitions and scientific inquiry, but they are not directly related to the actual security of communication. There are cases when IND-CCA compliance can be critical, but in the case of MTProto (1.0) the deviation from this property was a minor issue and did not affect message security. Namely, under certain circumstances a ciphertext could be modified so that it would have been accepted and decrypted to the same plaintext as the original unmodified ciphertext. It was impossible for the attacker to tamper with or decipher the plaintext.
+
+The gist, for non-technical readers, is this: Under certain circumstances somebody could take an encrypted message after it was sent (without knowing what was inside), change some symbols in the ciphertext (without being able to alter the actual message inside), and pass it on to you. After decryption, you would receive the same message that was sent and only you and the sender would know what was in it.
+
+To put this case into familiar terms:
+
+A postal worker could write 'Haha' (using invisible ink!) on the outside of a sealed package that he delivers to you. It didn't stop the package from being delivered, it doesn't allow them to change the contents of the package, and it doesn't allow them to see what was inside.
+
+Hash collisions for Diffie-Hellman Keys
+Earlier versions of Telegram used a 128-bit fingerprint to create the key visualization. It was theoretically possible to spoof it, provided a man-in-the-middle attacker was prepared to spend hundreds of billions of dollars to spoof one secret chat (even using GPUs or ASICs). It would've also taken such a secret chat an entire month to be created instead of mere seconds, which would've certainly been hard to ignore.
+
+Currently, the fingerprint uses an additional 160 bits from the SHA-256 of the key, yielding a total of 288 fingerprint bits, which makes the already infeasible attacks completely impossible.)
+Q: How is the server authenticated during DH key exchange?
+The DH exchange is authenticated with the server's public RSA-key that is built into the client (the same RSA-key is also used for protection against MitM attacks).
+
+Q: How are clients authenticated?
+Various secrets (nonce, server_nonce, new_nonce) exchanged during key generation guarantee that the DH-key can only be obtained by the instance that initiated the exchange.
+
+Notice that new_nonce is transferred explicitly only once, inside an RSA-encrypted message from the client to the server.
+
+Q: How are Secret Chats authenticated?
+Keys for end-to-end encrypted secret chats are generated by a new instance of DH key exchange, so they are known only to the parties involved and not to the server. To establish the identities of these parties and to ensure that no MitM is in place, it is recommended to compare identicons, generated from hashes of the DH secret chat keys (key visualizations).
+
+Perfect Forward Secrecy
+Related articles
+Perfect Forward Secrecy in Secret Chats
+Security guidelines for developers
+This article is about Perfect Forward Secrecy in cloud chats, see also PFS in Secret Chats.
+
+Telegram supports Perfect Forward Secrecy (PFS).
+
+To make this possible, the client generates a permanent authorization key using p_q_inner_data and a temporary key using p_q_inner_data_temp. (See Creating an Authorization Key for more info.) These 2 operations may be done in parallel using different connections. The client must save an expires_at unix timestamp expires_at = time + expires_in.
+
+Important: in order to achieve PFS, the client must never use the permanent auth_key_id directly. Every message that is sent to MTProto, must be encrypted by a temp_auth_key_id, that was bound to the perm_auth_key_id.
+
+An unbound temp_auth_key_id may only be used with the following methods:
+
+auth.bindTempAuthKey
+help.getConfig
+help.getNearestDc
+In order to bind a temporary authorization key to the permanent key the client creates a special binding message and executes the auth.bindTempAuthKey method using temp_auth_key. Once auth.bindTempAuthKey has been executed successfully, the client may continue using the API as usual; the client must also rewrite client info using initConnection after each binding. Each permanent key may only be bound to one temporary key at a time, binding a new temporary key overwrites the previous one.
+
+An auth.bindTempAuthKey request may also return an ENCRYPTED_MESSAGE_INVALID error, which must be handled as follows:
+
+If and only if the permanent auth key used in the request was created more than 60 seconds ago:
+Drop both the temporary and permanent auth keys.
+If the dropped main auth key is the main logged in auth key (the one used for logging into the user's native DC), this means the user was also logged out.
+Recreate temporary and permanent auth keys.
+Unconditionally, retry binding the temporary and permanent keys.
+Once the temporary key expires, the client needs to generate a new temporary key using p_q_inner_data_temp. Then it needs to re-bind that new temporary key to the initial permanent key. A new key can also be generated in advance, so that the client has a new key ready by the time the old one has expired.
+
+For additional security, the client can store the temporary authorization key in RAM only and never save it in persistent storage.
+
+A temporary authorization key may expire at any moment before expires_at, since such keys are also stored only in the RAM on the server-side. Be prepared to handle resulting MTProto errors correctly (non-existent auth_key_id results in a 404 error).
+Transport
+Enables the delivery of encrypted containers together with the external header (hereinafter, Payload) from client to server and back.:
+TCP
+Q: How are MTProto messages authenticated?
+All Telegram apps ensure that msg_key is equal to SHA-256 of a fragment of the auth_key concatenated with the decrypted message (including 12…1024 bytes of random padding). It is important that the plaintext always contains message length, server salt, session_id and other data not known to the attacker.
+
+It is crucial that AES decryption keys depend both on msg_key, and on auth_key, known only to the parties involved in the exchange.
+
+Q: Are you doing Encrypt-then-MAC, MAC-then-Encrypt or MAC-and-Encrypt?
+We do none of the above, strictly speaking. For message authentication, we compute SHA-256(auth_key_fragment + AES_decrypt(…,encrypted_message)) upon message receipt and compare this value to the msg_key received with the encrypted message.
+
+See also: Why not Encrypt-then-MAC?
+(Q: Why don't you go for a standard encrypt-then-MAC approach?
+Using encrypt-then-MAC, e.g. involving GCM (Galois Counter Mode), would enable the receiving party to detect unauthorized or modified ciphertexts, thus eliminating the need to decrypt them in case of tampering.
+
+In MTProto, the clients and the server authenticate messages by ensuring that SHA-256(auth_key_fragment + plaintext + padding) = msg_key and that the plaintext always contains message length, server salt, session_id and other data not known to a potential attacker before accepting any message. These security checks performed on the client before any message is accepted ensure that invalid or tampered-with messages will always be safely (and silently) discarded.
+
+This way we arrive at the same result. The difference is that the security check is performed before decryption in Encrypt-then-MAC and after decryption in MTProto – but in either case before a message is accepted. AES encryption / decryption on devices currently in use is comparable in speed with the additional HMAC computation required for the encrypt-then-MAC approach.
+
+)
+Analysis of the Telegram Key Exchange
+Martin R. Albrecht1 Lenka Mareková2 Kenneth G. Paterson2 Eyal Ronen3 Igors Stepanovs4
+1King’s College London
+2ETH Zurich
+3Tel-Aviv University
+4Amazon
+8 May 2025, Madrid, Spain
+Introduction
+• Telegram is a messaging application with a billion users
+
+Introduction
+:
+Introduction
+• Telegram is a messaging application with a billion users
+• It uses custom, highly non-standard cryptographic protocols (MTProto 2.0)
+
+Introduction
+• Telegram is a messaging application with a billion users
+• It uses custom, highly non-standard cryptographic protocols (MTProto 2.0)
+Caution: E2EE in Telegram is limited and largely unused
+=⇒ Focus on client-server connections
+
+Introduction
+• Telegram is a messaging application with a billion users
+• It uses custom, highly non-standard cryptographic protocols (MTProto 2.0)
+Caution: E2EE in Telegram is limited and largely unused
+=⇒ Focus on client-server connections
+• In previous work [AMPS22] we
+[AMPS22]: M. R. Albrecht, L. Mareková, K. G. Paterson and I. Stepanovs. Four attacks and a proof for Telegram. IEEE S&P, 2022.
+Introduction
+• Telegram is a messaging application with a billion users
+• It uses custom, highly non-standard cryptographic protocols (MTProto 2.0)
+Caution: E2EE in Telegram is limited and largely unused
+=⇒ Focus on client-server connections
+• In previous work [AMPS22] we
+• analysed and wrote proofs for the channel protocol
+[AMPS22]: M. R. Albrecht, L. Mareková, K. G. Paterson and I. Stepanovs. Four attacks and a proof for Telegram. IEEE S&P, 2022.
+Introduction
+• Telegram is a messaging application with a billion users
+• It uses custom, highly non-standard cryptographic protocols (MTProto 2.0)
+Caution: E2EE in Telegram is limited and largely unused
+=⇒ Focus on client-server connections
+• In previous work [AMPS22] we
+• analysed and wrote proofs for the channel protocol
+• found an attack on the key exchange protocol
+[AMPS22]: M. R. Albrecht, L. Mareková, K. G. Paterson and I. Stepanovs. Four attacks and a proof for Telegram. IEEE S&P, 2022.
+Introduction
+• Telegram is a messaging application with a billion users
+• It uses custom, highly non-standard cryptographic protocols (MTProto 2.0)
+Caution: E2EE in Telegram is limited and largely unused
+=⇒ Focus on client-server connections
+• In previous work [AMPS22] we
+• analysed and wrote proofs for the channel protocol
+• found an attack on the key exchange protocol
+• Aim of this work: analyse the “fixed” key exchange protocol
+[AMPS22]: M. R. Albrecht, L. Mareková, K. G. Paterson and I. Stepanovs. Four attacks and a proof for Telegram. IEEE S&P, 2022.
+Overview
+1 Introduction
+2 Security model
+3 Telegram protocols
+4 Results
+5 Takeaways
+First use protocol flow
+4:40
+Client
+channel via akt
+establish long-term ak
+establish temporary akt
+bind akt to ak
+phone num. auth. chat messages
+key exchange
+channel
+based on docs, client code & server interaction
+Server
+First use protocol flow
+4:40
+Client
+channel via akt
+establish long-term ak
+establish temporary akt
+bind akt to ak
+phone num. auth. chat messages
+key exchange
+channel
+based on docs, client code & server interaction
+Server
+First use protocol flow
+4:40
+Client
+channel via akt
+establish long-term ak
+establish temporary akt
+bind akt to ak
+phone num. auth. chat messages
+key exchange
+channel
+based on docs, client code & server interaction
+Server
+First use protocol flow
+4:40
+Client
+channel via akt
+establish long-term ak
+establish temporary akt
+bind akt to ak
+phone num. auth. chat messages
+key exchange
+channel
+based on docs, client code & server interaction
+Server
+First use protocol flow
+4:40
+Client
+channel via akt
+establish long-term ak
+establish temporary akt
+bind akt to ak
+phone num. auth. chat messages
+key exchange
+channel
+based on docs, client code & server interaction
+Server
+Subsequent use protocol flow
+4:40
+Client
+channel via akt
+establish long-term ak
+establish temporary akt
+bind akt to ak
+phone num. auth. chat messages
+key exchange
+channel
+based on docs, client code & server interaction
+Server
+Scope of analysis
+4:40
+Client
+channel via akt
+establish long-term ak
+establish temporary akt
+bind akt to ak
+phone num. auth. chat messages
+key exchange
+channel
+based on docs, client code & server interaction
+Server
+Overview of this talk
+1 Introduction
+2 Security model
+3 Telegram protocols
+4 Results
+5 Takeaways
+Security model
+• New game-based authenticated key exchange model tailored to Telegram
+
+Security model
+• New game-based authenticated key exchange model tailored to Telegram
+• Building upon the multi-stage key exchange (MSKE) models [FG14, DFGS21]
+... ...
+... ...
+Client Server
+k
+... ...
+... ...
+Client Server
+k1
+... ...
+... ...
+k2
+[FG14]: M. Fischlin and F. Günther. Multi-stage key exchange and the case of Google’s QUIC protocol. CCS, 2014.
+[DFGS21]: B. Dowling, M. Fischlin, F. Günther, and D. Stebila. A cryptographic analysis of the TLS 1.3 handshake protocol. JoC, 2021.
+Telegram protocols as MSKE
+4:40
+Client
+channel via akt
+establish long-term ak
+establish temporary akt
+bind akt to ak
+2-stage
+3-stage Server
+Security model
+• Standard setup (multi-user setting)
+
+Security model
+• Standard setup (multi-user setting)
+• Standard key exchange adversary (Corrupt, Reveal, Test oracles)
+
+Security model
+• Standard setup (multi-user setting)
+• Standard key exchange adversary (Corrupt, Reveal, Test oracles)
+• Basic security goals
+
+Security model
+• Standard setup (multi-user setting)
+• Standard key exchange adversary (Corrupt, Reveal, Test oracles)
+• Basic security goals
+• indistinguishability of session keys of all stages, with forward secrecy
+
+Security model
+• Standard setup (multi-user setting)
+• Standard key exchange adversary (Corrupt, Reveal, Test oracles)
+• Basic security goals
+• indistinguishability of session keys of all stages, with forward secrecy
+• client and server authentication (without full key confirmation)
+Security model
+Weaker or non-standard properties:
+... ...
+... ...
+Client Server
+k1
+... ...
+... ...
+k×2
+influences
+̸≈ random bitstring
+auth. only
+Security model
+Weaker or non-standard properties:
+• Key dependence between stages
+... ...
+... ...
+Client Server
+k1
+... ...
+... ...
+k×2
+influences
+̸≈ random bitstring
+auth. only
+Security model
+Weaker or non-standard properties:
+• Key dependence between stages
+• Non-uniform session key distribution
+... ...
+... ...
+Client Server
+k1
+... ...
+... ...
+k×2
+influences
+̸≈ random bitstring
+auth. only
+Security model
+Weaker or non-standard properties:
+• Key dependence between stages
+• Non-uniform session key distribution
+• Testable and non-testable stages
+... ...
+... ...
+Client Server
+k1
+... ...
+... ...
+k×2
+influences
+̸≈ random bitstring
+auth. only
+Overview of this talk
+1 Introduction
+2 Security model
+3 Telegram protocols
+4 Results
+5 Takeaways
+Establishing ak – Stage 1
+Client (knows pk) Server (has (pk,sk))
+n ←$ {0,1}
+128 n ns ←$ {0,1}
+128
+p
+′
+,q
+′ ←$
+©
+32-bit primesª
+nn ←$ {0,1}
+256 n,ns,prod′
+,F prod′ ← p
+′
+·q
+′
+c0 ←$ TOAEP+
+.Enc(pk,...nn ...)
+n,ns,p
+′
+,q
+′
+,f,c0
+
+Establishing ak – Stage 1
+Client (knows pk) Server (has (pk,sk))
+n ←$ {0,1}
+128 n ns ←$ {0,1}
+128
+p
+′
+,q
+′ ←$
+©
+32-bit primesª
+nn ←$ {0,1}
+256 n,ns,prod′
+,F prod′ ← p
+′
+·q
+′
+c0 ←$ TOAEP+
+.Enc(pk,...nn ...)
+n,ns,p
+′
+,q
+′
+,f,c0
+stage 1 session key: nn
+Establishing ak – Stage 1
+Client (knows pk) Server (has (pk,sk))
+n ←$ {0,1}
+128 n ns ←$ {0,1}
+128
+p
+′
+,q
+′ ←$
+©
+32-bit primesª
+nn ←$ {0,1}
+256 n,ns,prod′
+,F prod′ ← p
+′
+·q
+′
+c0 ←$ TOAEP+
+.Enc(pk,...nn ...)
+n,ns,p
+′
+,q
+′
+,f,c0
+stage 1 session key: nn
+Telegram OAEP+ (custom version of OAEP+ [Sho02])
+TOAEP+
+.Enc(pk,m)
+1 : extract N from pk
+2 : w ← N
+3 : while w ≥ N
+4 : r ←$ {0,1}
+256
+5 : x ←$ pack(m)
+6 : c ← SHA-256(r ∥ x)
+7 : z ← reverse(x) ∥ c
+8 : s ← AES-256-IGE.Enc(r,0,z)
+9 : t ← SHA-256(s) ⊕r
+10 : w ← t ∥ s
+11 : c ← RSA.Enc(pk,w)
+12 : return c
+TOAEP+
+.Dec(sk,c)
+1 : w ← RSA.Dec(sk,c)
+2 : t ← w[0 : 256]
+3 : s ← w[256 : 2048]
+4 : r ← SHA-256(s)⊕t
+5 : z ← AES-256-IGE.Dec(r,0,s)
+6 : x ← reverse(z[0 : 1536])
+7 : c ← z[1536 : 1792]
+8 : if c ̸= SHA-256(r ∥ x) then return ⊥
+9 : m ← unpack(x)
+10 : return m
+[Sho02]: Victor Shoup. OAEP reconsidered. Journal of Cryptology, 2002.
+Telegram OAEP+ (custom version of OAEP+ [Sho02])
+TOAEP+
+.Enc(pk,m)
+1 : extract N from pk
+2 : w ← N
+3 : while w ≥ N
+4 : r ←$ {0,1}
+256
+5 : x ←$ pack(m)
+6 : c ← SHA-256(r ∥ x)
+7 : z ← reverse(x) ∥ c
+8 : s ← AES-256-IGE.Enc(r,0,z)
+9 : t ← SHA-256(s) ⊕r
+10 : w ← t ∥ s
+11 : c ← RSA.Enc(pk,w)
+12 : return c
+TOAEP+
+.Dec(sk,c)
+1 : w ← RSA.Dec(sk,c)
+2 : t ← w[0 : 256]
+3 : s ← w[256 : 2048]
+4 : r ← SHA-256(s)⊕t
+5 : z ← AES-256-IGE.Dec(r,0,s)
+6 : x ← reverse(z[0 : 1536])
+7 : c ← z[1536 : 1792]
+8 : if c ̸= SHA-256(r ∥ x) then return ⊥
+9 : m ← unpack(x)
+10 : return m
+[Sho02]: Victor Shoup. OAEP reconsidered. Journal of Cryptology, 2002.
+IGE..?
+mt
+EK
+ct
+······
+ct−1
+mt−1
+m3
+EK
+c3
+m2
+EK
+c2
+m1
+EK
+c1
+IVc
+IVm
+Establishing ak – Stage 2
+Client (has nn) Server (has nn)
+a ←$ {0,1}
+2048
+k ∥ iv ← SKDF .Ev(nn,ns)
+n,ns,c1 c1 ←$ HtE . Enc ( k ∥ iv ,...g
+a mod p...)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . repeatable . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+b ←$ {0,1}
+2048
+c2 ←$ HtE . Enc ( k ∥ iv ,...g
+b mod p...)
+n,ns,c2 ak ← g
+ab mod p
+ax ∥ ... ∥ aid ← SHA-1(ak)
+if aid ∈ Said then wait for retry
+if hi = h2 then retry n,ns,hi hi ← NHi
+.Ev(nn,ax)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+
+Establishing ak – Stage 2
+Client (has nn) Server (has nn)
+a ←$ {0,1}
+2048
+k ∥ iv ← SKDF .Ev(nn,ns)
+n,ns,c1 c1 ←$ HtE . Enc ( k ∥ iv ,...g
+a mod p...)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . repeatable . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+b ←$ {0,1}
+2048
+c2 ←$ HtE . Enc ( k ∥ iv ,...g
+b mod p...)
+n,ns,c2 ak ← g
+ab mod p
+ax ∥ ... ∥ aid ← SHA-1(ak)
+if aid ∈ Said then wait for retry
+if hi = h2 then retry n,ns,hi hi ← NHi
+.Ev(nn,ax)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+stage 2 session key: ak[0 : 1024]
+Establishing ak – Stage 2
+Client (has nn) Server (has nn)
+a ←$ {0,1}
+2048
+k ∥ iv ← SKDF .Ev(nn,ns)
+n,ns,c1 c1 ←$ HtE . Enc ( k ∥ iv ,...g
+a mod p...)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . repeatable . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+b ←$ {0,1}
+2048
+c2 ←$ HtE . Enc ( k ∥ iv ,...g
+b mod p...)
+n,ns,c2 ak ← g
+ab mod p
+ax ∥ ... ∥ aid ← SHA-1(ak)
+if aid ∈ Said then wait for retry
+if hi = h2 then retry n,ns,hi hi ← NHi
+.Ev(nn,ax)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+stage 2 session key: ak[0 : 1024]
+Establishing ak – Stage 2
+Client (has nn) Server (has nn)
+a ←$ {0,1}
+2048
+k ∥ iv ← SKDF .Ev(nn,ns)
+n,ns,c1 c1 ←$ HtE . Enc ( k ∥ iv ,...g
+a mod p...)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . repeatable . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+b ←$ {0,1}
+2048
+c2 ←$ HtE . Enc ( k ∥ iv ,...g
+b mod p...)
+n,ns,c2 ak ← g
+ab mod p
+ax ∥ ... ∥ aid ← SHA-1(ak)
+if aid ∈ Said then wait for retry
+if hi = h2 then retry n,ns,hi hi ← NHi
+.Ev(nn,ax)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+stage 2 session key: ak[0 : 1024]
+Establishing ak – Stage 2
+Client (has nn) Server (has nn)
+a ←$ {0,1}
+2048
+k ∥ iv ← SKDF .Ev(nn,ns)
+n,ns,c1 c1 ←$ HtE . Enc ( k ∥ iv ,...g
+a mod p...)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . repeatable . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+b ←$ {0,1}
+2048
+c2 ←$ HtE . Enc ( k ∥ iv ,...g
+b mod p...)
+n,ns,c2 ak ← g
+ab mod p
+ax ∥ ... ∥ aid ← SHA-1(ak)
+if aid ∈ Said then wait for retry
+if hi = h2 then retry n,ns,hi hi ← NHi
+.Ev(nn,ax)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+stage 2 session key: ak[0 : 1024]
+Establishing ak – Stage 2
+Client (has nn) Server (has nn)
+a ←$ {0,1}
+2048
+k ∥ iv ← SKDF .Ev(nn,ns)
+n,ns,c1 c1 ←$ HtE . Enc ( k ∥ iv ,...g
+a mod p...)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . repeatable . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+b ←$ {0,1}
+2048
+c2 ←$ HtE . Enc ( k ∥ iv ,...g
+b mod p...)
+n,ns,c2 ak ← g
+ab mod p
+ax ∥ ... ∥ aid ← SHA-1(ak)
+if aid ∈ Said then wait for retry
+if hi = h2 then retry n,ns,hi hi ← NHi
+.Ev(nn,ax)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+stage 2 session key: ak[0 : 1024]
+Establishing ak – Stage 2
+Client (has nn) Server (has nn)
+a ←$ {0,1}
+2048
+k ∥ iv ← SKDF .Ev(nn,ns)
+n,ns,c1 c1 ←$ HtE . Enc ( k ∥ iv ,...g
+a mod p...)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . repeatable . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+b ←$ {0,1}
+2048
+c2 ←$ HtE . Enc ( k ∥ iv ,...g
+b mod p...)
+n,ns,c2 ak ← g
+ab mod p
+ax ∥ ... ∥ aid ← SHA-1(ak)
+if aid ∈ Said then wait for retry
+if hi = h2 then retry n,ns,hi hi ← NHi
+.Ev(nn,ax)
+. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+stage 2 session key: ak[0 : 1024]
+More custom primitives: SKDF, HtE, NHi
+• Custom key derivation function
+SKDF.Ev(k,x) → SHA-1 (k ∥ x) ∥ SHA-1 (x ∥ k) ∥ SHA-1 (k ∥ k) ∥ k[0 : 32]
+
+More custom primitives: SKDF, HtE, NHi
+• Custom key derivation function
+SKDF.Ev(k,x) → SHA-1 (k ∥ x) ∥ SHA-1 (x ∥ k) ∥ SHA-1 (k ∥ k) ∥ k[0 : 32]
+
+More custom primitives: SKDF, HtE, NHi
+• Custom key derivation function
+SKDF.Ev(k,x) → SHA-1 (k ∥ x) ∥ SHA-1 (x ∥ k) ∥ SHA-1 (k ∥ k) ∥ k[0 : 32]
+• Custom hash-then-encrypt symmetric encryption scheme
+HtE.Enc(k ∥ iv,m) → AES-256-IGE.Enc(k,iv, SHA-1 (m) ∥ m ∥ pad)
+
+More custom primitives: SKDF, HtE, NHi
+• Custom key derivation function
+SKDF.Ev(k,x) → SHA-1 (k ∥ x) ∥ SHA-1 (x ∥ k) ∥ SHA-1 (k ∥ k) ∥ k[0 : 32]
+• Custom hash-then-encrypt symmetric encryption scheme
+HtE.Enc(k ∥ iv,m) → AES-256-IGE.Enc(k,iv, SHA-1 (m) ∥ m ∥ pad)
+• Custom stateful hash
+NHi
+.Ev(k,x) → SHA-1 (k ∥ 0i ∥ x)[32 : 160] for i ∈ {1,2,3}
+More custom primitives: SKDF, HtE, NHi
+• Custom key derivation function
+SKDF.Ev(k,x) → SHA-1 (k ∥ x) ∥ SHA-1 (x ∥ k) ∥ SHA-1 (k ∥ k) ∥ k[0 : 32]
+• Custom hash-then-encrypt symmetric encryption scheme
+HtE.Enc(k ∥ iv,m) → AES-256-IGE.Enc(k,iv, SHA-1 (m) ∥ m ∥ pad)
+• Custom stateful hash
+NHi
+.Ev(k,x) → SHA-1 (k ∥ 0i ∥ x)[32 : 160] for i ∈ {1,2,3}
+Binding a temporary akt to a long-term ak – Stage 3
+Let akv1 = ak[0 : 1024], MTP-CH = channel using akt.
+Client (has (akv1,aid),MTP-CH) Server (has T,MTP-CH)
+m ← ...aidt ∥ aid...
+c ←$ CHv1 .Enc(akv1,m)
+akv1 ← T[aid]
+m′ ← CHv1 .Dec(akv1,c)
+check m′ = m
+m,c
+true
+Binding a temporary akt to a long-term ak – Stage 3
+Let akv1 = ak[0 : 1024], MTP-CH = channel using akt.
+Client (has (akv1,aid),MTP-CH) Server (has T,MTP-CH)
+m ← ...aidt ∥ aid...
+c ←$ CHv1 .Enc(akv1,m)
+akv1 ← T[aid]
+m′ ← CHv1 .Dec(akv1,c)
+check m′ = m
+m,c
+true
+Overview of this talk
+1 Introduction
+2 Security model
+3 Telegram protocols
+4 Results
+5 Takeaways
+Results
+AKE security of 2-stage protocol (simplified)
+Let A be an adversary against the 2-stage protocol with at most n sessions and s servers,
+using a fixed Diffie-Hellman group G of order q.
+Then ∃ DIND-CCA, AINT-PTXT, DIND-KEY, DS-EXP, DDDH, DOTPRF :
+Adv2-stage(A ) ≤
+n
+2
+2
+384 +
+sn2
+2
+497 +
+16sn3
+q
++4sn(n+1)·
+³
+2· AdvTOAEP+ (DIND-CCA)
++ AdvHtE,SKDF(AINT-PTXT)
+´
++4sn2
+·
+³
+AdvSKDF,NH(DIND-KEY) + AdvG,q
+(DS-EXP)
++ AdvG,q
+(DDDH) + AdvSHACAL-1
+(DOTPRF)
+´
+.
+Results
+AKE security of 2-stage protocol (simplified)
+Let A be an adversary against the 2-stage protocol with at most n sessions and s servers,
+using a fixed Diffie-Hellman group G of order q.
+Then ∃ DIND-CCA, AINT-PTXT, DIND-KEY, DS-EXP, DDDH, DOTPRF :
+Adv2-stage(A ) ≤
+n
+2
+2
+384 +
+sn2
+2
+497 +
+16sn3
+q
++4sn(n+1)·
+³
+2· AdvTOAEP+ (DIND-CCA)
++ AdvHtE,SKDF(AINT-PTXT)
+´
++4sn2
+·
+³
+AdvSKDF,NH(DIND-KEY) + AdvG,q
+(DS-EXP)
++ AdvG,q
+(DDDH) + AdvSHACAL-1
+(DOTPRF)
+´
+.
+Results
+IND-CCA of Telegram OAEP+ (simplified)
+We model SHA-256 as a random oracle and AES-256 as an ideal cipher.
+Let DIND-CCA be an adversary against TOAEP+
+, making qe encryption and qd decryption
+queries, qH random oracle queries, and qc ideal cipher queries.
+Assume qe,qd,qH,qc ≤ 2
+126 so that qd ·qH ≤ 2
+134
+.
+Then ∃ AOW against the one-wayness of RSA :
+AdvTOAEP+ (DIND-CCA) ≤ 2· AdvRSA(AOW) +2
+−116
+.
+Results
+IND-CCA of Telegram OAEP+ (simplified)
+We model SHA-256 as a random oracle and AES-256 as an ideal cipher.
+Let DIND-CCA be an adversary against TOAEP+
+, making qe encryption and qd decryption
+queries, qH random oracle queries, and qc ideal cipher queries.
+Assume qe,qd,qH,qc ≤ 2
+126 so that qd ·qH ≤ 2
+134
+.
+Then ∃ AOW against the one-wayness of RSA :
+AdvTOAEP+ (DIND-CCA) ≤ 2· AdvRSA(AOW) +2
+−116
+.
+Results
+INT-PTXT of Telegram’s Hash-then-Encrypt scheme
+We model AES-256 as an ideal cipher.
+Let AINT-PTXT be an adversary against HtE and SKDF, making encryption/decryption
+queries for t blocks, and making qc queries to the ideal cipher.
+Then ∃ ASPR, AUPREF, AUSUFF :
+AdvHtE,SKDF(AINT-PTXT) ≤
+t
+2
+2
+128 +
+qc
+2
+256 + AdvSHA-1
+(ASPR)
++2· AdvSHACAL-1
+(D3TPRF) + Adv(AEM) .
+Results
+INT-PTXT of Telegram’s Hash-then-Encrypt scheme
+We model AES-256 as an ideal cipher.
+Let AINT-PTXT be an adversary against HtE and SKDF, making encryption/decryption
+queries for t blocks, and making qc queries to the ideal cipher.
+Then ∃ ASPR, AUPREF, AUSUFF :
+AdvHtE,SKDF(AINT-PTXT) ≤
+t
+2
+2
+128 +
+qc
+2
+256 + AdvSHA-1
+(ASPR)
++2· AdvSHACAL-1
+(D3TPRF) + Adv(AEM) .
+Results
+AKE security of 3-stage protocol (simplified)
+Let A be an adversary against the 3-stage protocol. Then ∃ AEUF-CMA, AKE :
+Adv3-stage(A ) ≤ Adv2-stage(AKE) +2· AdvCHv1(AEUF-CMA) .
+Results
+AKE security of 3-stage protocol (simplified)
+Let A be an adversary against the 3-stage protocol. Then ∃ AEUF-CMA, AKE :
+Adv3-stage(A ) ≤ Adv2-stage(AKE) +2· AdvCHv1(AEUF-CMA) .
+Results
+EUF-CMA of MTProto 1.0 channel encryption
+Let A be an adversary against CHv1 with at most s
+′
+long-term symmetric keys, making at
+most qv verification queries. Then ∃ D4PRF, AUPCR :
+AdvCHv1(A ) ≤ s
+′
+·
+³
+2· AdvSHACAL-1
+(D4PRF) +
+qv
+2
+128 + AdvSHA-1
+(AUPCR)
+´
+.
+Results
+EUF-CMA of MTProto 1.0 channel encryption
+Let A be an adversary against CHv1 with at most s
+′
+long-term symmetric keys, making at
+most qv verification queries. Then ∃ D4PRF, AUPCR :
+AdvCHv1(A ) ≤ s
+′
+·
+³
+2· AdvSHACAL-1
+(D4PRF) +
+qv
+2
+128 + AdvSHA-1
+(AUPCR)
+´
+.
+New assumptions
+
+New assumptions
+• 3TPRF , 4PRF : pseudorandomness of SHACAL-1 on fixed input with partial
+key leakage
+
+New assumptions
+• 3TPRF , 4PRF : pseudorandomness of SHACAL-1 on fixed input with partial
+key leakage
+• SPR , UPCR : second-preimage resistance of SHA-1 with tweaks
+
+New assumptions
+• 3TPRF , 4PRF : pseudorandomness of SHACAL-1 on fixed input with partial
+key leakage
+• SPR , UPCR : second-preimage resistance of SHA-1 with tweaks
+• IND-KEY : indistinguishability of key reuse with SHA-1-based functions
+Overview of this talk
+1 Introduction
+2 Security model
+3 Telegram protocols
+4 Results
+5 Takeaways
+Takeaways
+• MTProto 2.0 is a brittle protocol
+
+Takeaways
+• MTProto 2.0 is a brittle protocol
+• SHA-1 is misused for many purposes where better solutions exist
+
+Takeaways
+• MTProto 2.0 is a brittle protocol
+• SHA-1 is misused for many purposes where better solutions exist
+• Plaintext checks prevent attacks, but place more burden on implementers
+
+Takeaways
+• MTProto 2.0 is a brittle protocol
+• SHA-1 is misused for many purposes where better solutions exist
+• Plaintext checks prevent attacks, but place more burden on implementers
+• Some protocol features such as retry loops only create complexity
+
+Takeaways
+• MTProto 2.0 is a brittle protocol
+• SHA-1 is misused for many purposes where better solutions exist
+• Plaintext checks prevent attacks, but place more burden on implementers
+• Some protocol features such as retry loops only create complexity
+• Ad-hoc design leads to sub-par security guarantees
+
+Takeaways
+• MTProto 2.0 is a brittle protocol
+• SHA-1 is misused for many purposes where better solutions exist
+• Plaintext checks prevent attacks, but place more burden on implementers
+• Some protocol features such as retry loops only create complexity
+• Ad-hoc design leads to sub-par security guarantees
+• Implementation details such as encoding schemes can be modelled faithfully
+
+Takeaways
+• MTProto 2.0 is a brittle protocol
+• SHA-1 is misused for many purposes where better solutions exist
+• Plaintext checks prevent attacks, but place more burden on implementers
+• Some protocol features such as retry loops only create complexity
+• Ad-hoc design leads to sub-par security guarantees
+• Implementation details such as encoding schemes can be modelled faithfully
+• Telegram is not as broken as you thought
+
+Takeaways
+• MTProto 2.0 is a brittle protocol
+• SHA-1 is misused for many purposes where better solutions exist
+• Plaintext checks prevent attacks, but place more burden on implementers
+• Some protocol features such as retry loops only create complexity
+• Ad-hoc design leads to sub-par security guarantees
+• Implementation details such as encoding schemes can be modelled faithfully
+• Telegram is not as broken as you thought (unless you can break our
+assumptions?)
+Note make it highly sophotctaed with a user friedly GUI using PySide6
