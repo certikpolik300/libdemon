@@ -210,15 +210,3 @@ class CrypteX1:
     def generate_nonce() -> bytes:
         return secrets.token_bytes(CrypteX1.NONCE_SIZE)
 
-# Example usage
-if __name__ == "__main__":
-    key = CrypteX1.generate_key()
-    cryptex1 = CrypteX1(key)
-    nonce = CrypteX1.generate_nonce()
-    plaintext = b"The quick brown fox jumps over the lazy dog. " * 5
-    print("Plaintext:", plaintext)
-    ciphertext = cryptex1.encrypt_gcm(plaintext, b"header", nonce)
-    print("Ciphertext:", ciphertext.hex())
-    decrypted = cryptex1.decrypt_gcm(ciphertext, b"header")
-    print("Decrypted:", decrypted)
-    assert decrypted == plaintext
