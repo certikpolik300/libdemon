@@ -26,11 +26,18 @@ msg_key  = os.urandom(16)    # Simulovaný SHA256 middle bytes z plaintextu
 aes_key_client, aes_iv_client = telegram_kdf(auth_key, msg_key, 'client')
 aes_key_server, aes_iv_server = telegram_kdf(auth_key, msg_key, 'server')
 
-# 🖨️ Výstup
-print("=== CLIENT TO SERVER ===")
-print("AES KEY:", aes_key_client.hex())
-print("AES IV :", aes_iv_client.hex())
+if __name__ == "__main__":
+    # zavolání testu nebo výpis výsledků
+    auth_key = os.urandom(256)
+    msg_key = os.urandom(16)
 
-print("\n=== SERVER TO CLIENT ===")
-print("AES KEY:", aes_key_server.hex())
-print("AES IV :", aes_iv_server.hex())
+    aes_key_client, aes_iv_client = telegram_kdf(auth_key, msg_key, 'client')
+    aes_key_server, aes_iv_server = telegram_kdf(auth_key, msg_key, 'server')
+
+    print("=== CLIENT TO SERVER ===")
+    print("AES KEY:", aes_key_client.hex())
+    print("AES IV :", aes_iv_client.hex())
+    print()
+    print("=== SERVER TO CLIENT ===")
+    print("AES KEY:", aes_key_server.hex())
+    print("AES IV :", aes_iv_server.hex())
