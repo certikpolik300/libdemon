@@ -1,5 +1,3 @@
-Create in Python using my aes: https://github.com/pierrejacksoo/z/blob/main/aes.py a Chat Application with end-to-end encryption add only private-secreat peer*to-peer 2 person chats and add to it:
-1.1 Background
 Telegram is a widely used messaging application known for its user-friendly interface
 and robust features. It claims to allow users to send messages, photos, videos, and files
 securely across various platforms. With features like group chats, secret channels, and
